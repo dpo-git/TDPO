@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>N6_Числовые_характеристики_и_корреляция_продвинутый</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- CodeMirror -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/eclipse.css">
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/python/python.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/closebrackets.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/comment/comment.js"></script>
+
+<!-- Pyodide -->
+<script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+
+<!-- MathJax -->
+<script>
+window.MathJax = { tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]}, svg: {fontCache: 'global'} };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<style>
+:root {
+  --bg:#fff; --fg:#202124; --muted:#5f6368; --border:#e0e3e7; --accent:#1a73e8;
+  --code-bg:#f8f9fa; --out-bg:#0b1020; --out-fg:#e5e7eb;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--fg)}
+body{font-family:'Roboto',system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+main{max-width:1024px;margin:0 auto;padding:24px 16px 64px}
+header.page-title h1{margin:0 0 12px;font-size:28px}
+
+.cell{margin:16px 0}
+
+/* Markdown */
+.cell.md .md{font-size:16px;line-height:1.65}
+.cell.md .md h1,.cell.md .md h2,.cell.md .md h3,.cell.md .md h4{margin:1.2em 0 .6em;font-weight:700}
+.cell.md .md h1{font-size:1.4em}
+.cell.md .md h2{font-size:1.3em}
+.cell.md .md h3{font-size:1.2em}
+.cell.md .md code{background:#f1f3f4;padding:2px 4px;border-radius:4px;font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace}
+.cell.md .md pre code{background:var(--code-bg);display:block;padding:10px;border:1px solid var(--border);border-radius:8px;white-space:pre-wrap}
+.cell.md .md ul,.cell.md .md ol{margin:.25em 0 1em;padding-left:1.4em}
+.cell.md .md li{margin:.25em 0}
+.cell.md .md li>p{margin:0}
+.md table.md-table{border-collapse:collapse;margin:12px 0;width:auto;max-width:100%}
+.md table.md-table th,.md table.md-table td{border:1px solid var(--border);padding:6px 10px;text-align:left;vertical-align:top}
+.md table.md-table thead th{background:#f6f8fa;font-weight:600}
+.cell.md .md hr.md-hr{
+  border:0;
+  border-top:1px solid var(--border);
+  margin:16px 0;
+}
+
+.cell.md .md blockquote.md-hint{
+  margin:10px 0; padding:10px 12px;
+  border-left:4px solid #8b5cf6;   /* фиолетовая полоска */
+  background:#f5f3ff;               /* светло-фиолетовый фон */
+  border-radius:8px;
+}
+.cell.md .md blockquote p{ margin:0; }
+
+/* collapsible answer */
+.cell.md .md details.md-answer{
+  margin:12px 0;
+  border:1px dashed #c7b8ff;
+  background:#f9f7ff;
+  border-radius:10px;
+  padding:8px 12px;
+}
+.cell.md .md details.md-answer > summary{
+  cursor:pointer;
+  font-weight:600;
+  outline:none;
+  list-style:none;
+}
+.cell.md .md details.md-answer > summary::-webkit-details-marker{ display:none; }
+.cell.md .md details.md-answer > pre{
+  margin:10px 0 0;
+  background:#f4f3ff;
+  border:1px solid #e6e1ff;
+  border-radius:8px;
+  padding:10px;
+  overflow:auto;
+}
+
+
+/* Code cells */
+.cell.code .editor-wrap{border:1px solid var(--border);border-radius:12px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.05);padding-bottom:0;resize:vertical;overflow:auto}
+.cell-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;background:#f8fbff;border-bottom:1px solid var(--border)}
+.badge{color:var(--muted);font-size:12px}
+.actions .btn{appearance:none;padding:6px 10px;font-size:13px;border-radius:8px;cursor:pointer;border:1px solid var(--border);background:#fff;color:#202124}
+.actions .btn.run{border-color:var(--accent);background:var(--accent);color:#fff}
+.actions .btn.clear,.actions .btn.copy,.actions .btn.reset{margin-left:6px}
+
+/* Показываем весь код, ничего не обрезаем */
+.CodeMirror{background:var(--code-bg);border-bottom:1px solid var(--border);font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace;font-size:14px;line-height:1.45;height:auto;max-height:none}
+
+/* Output */
+.output{background:var(--out-bg);color:var(--out-fg);padding:12px;min-height:24px;font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace}
+.output pre{margin:0;white-space:pre-wrap}
+
+hr.sep{margin:24px 0;border:0;border-top:1px solid var(--border)}
+footer.note{color:var(--muted);font-size:13px;margin-top:40px}
+</style>
+</head>
+<body>
+<main>
+  <header class="page-title"><h1>N6 (продвинутый) — Числовые характеристики и корреляция: устойчивость, квантили, Чебышёв, СЗБЧ</h1></header> 
+  <section class="cell md"><div class="md">
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+Разбираем <em>математическое ожидание</em>, <em>медиану</em>, <em>дисперсию</em> и <em>корреляцию</em> на примерах, где среднее и медиана расходятся, есть выбросы, а также проверяем на практике неравенство Чебышёва и Закон Больших Чисел (в мягкой формулировке).  
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h2>Часть A. МО vs медиана: асимметричные распределения и выбросы</h2>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h3>Задание A1. Влияние выбросов на среднее и медиану</h3>
+<p>Рассмотрим небольшой набор данных <code>x = [10, 11, 11, 12, 12, 13, 100]</code>.  
+Посчитайте <strong>среднее</strong> и <strong>медиану</strong>.  
+Затем замените выброс 100 на 1000 и снова сравните — что изменится?</p>
+<strong>⬇️ Напишите свой код в ячейке ниже.</strong>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[1]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code1','out1')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out1')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code1')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code1')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code1" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+    <div id="out1" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>💡 Подсказка</summary>
+  <ol>
+    <li>Среднее вычисляется просто: <code>mean = sum(x)/len(x)</code>.</li>
+    <li>Чтобы найти медиану:
+      <ul>
+        <li>отсортируйте список (<code>sorted(x)</code>),</li>
+        <li>найдите центральный элемент (или усредните два центральных, если элементов чётное количество).</li>
+      </ul>
+    </li>
+    <li>Сравните результаты: медиана изменится мало, а среднее — сильно, потому что оно чувствительно к выбросам.</li>
+  </ol>
+</details>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>🧩 Посмотреть правильный ответ</summary>
+  <pre><code># Базовые данные без сильного выброса
+x = [10, 11, 11, 12, 12, 13, 100]
+
+# 1. Среднее значение
+mean_x = sum(x) / len(x)  # сумма всех значений / их количество
+
+# 2. Медиана
+xs = sorted(x)             # сортируем список по возрастанию
+n = len(xs)                # считаем длину
+if n % 2 == 1:             # если нечётное число элементов
+    median_x = xs[n//2]    # берём центральный
+else:                      # если чётное — усредняем два средних
+    median_x = 0.5 * (xs[n//2 - 1] + xs[n//2])
+
+print("Исходные данные:", xs)
+print("Среднее =", round(mean_x, 2), "  Медиана =", median_x)
+
+# 3. Теперь усилим выброс: заменим 100 на 1000
+y = [10, 11, 11, 12, 12, 13, 1000]
+
+mean_y = sum(y) / len(y)   # новое среднее
+ys = sorted(y)
+n = len(ys)
+if n % 2 == 1:
+    median_y = ys[n//2]
+else:
+    median_y = 0.5 * (ys[n//2 - 1] + ys[n//2])
+
+print("\nПосле добавления сильного выброса:")
+print("Среднее =", round(mean_y, 2), "  Медиана =", median_y)
+</code></pre>
+</details>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h3>Задание A2. Устойчивая оценка центра: «усечённое среднее»</h3>
+<p>Иногда в данных есть выбросы (очень большие или очень маленькие значения), которые сильно тянут среднее вверх или вниз.  
+Чтобы уменьшить влияние выбросов, можно отбросить крайние значения и усреднить оставшиеся.</p>
+<p>Создайте функцию <code>trimmed_mean(x, alpha=0.1)</code>, которая выполняет следующее:</p>
+<ol>
+  <li>Сортирует список <code>x</code>.</li>
+  <li>Отбрасывает по <code>alpha</code> доле элементов с <strong>начала</strong> и с <strong>конца</strong> списка.</li>
+  <li>Возвращает среднее значение по оставшейся «середине».</li>
+</ol>
+
+<p>Здесь <code>alpha</code> — это доля данных, которую нужно убрать с каждого края.  
+Например, при <code>alpha=0.1</code> и <code>n=20</code> удаляем по 2 элемента с начала и с конца.</p>
+<strong>⬇️ Напишите свой код в ячейке ниже.</strong>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[2]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code2','out2')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out2')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code2')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code2')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code2" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+    <div id="out2" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>💡 Подсказка</summary>
+  <ol>
+    <li>Отсортируйте данные: <code>xs = sorted(x)</code>.</li>
+    <li>Посчитайте, сколько элементов нужно убрать с каждой стороны: <code>k = int(alpha * n)</code>.</li>
+    <li>Возьмите «середину» списка: <code>core = xs[k:n-k]</code>.</li>
+    <li>Найдите среднее по этим оставшимся элементам.</li>
+    <li>Если данных мало, уделите особое внимание значению <code>k</code>.</li>
+  </ol>
+</details>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>🧩 Посмотреть правильный ответ</summary>
+  <pre><code># Функция усечённого среднего
+def trimmed_mean(x, alpha=0.1):
+    xs = sorted(x)                    # сортируем копию списка
+    n = len(xs)                       # длина выборки
+    k = int(alpha * n)                # сколько элементов убрать с каждого края
+    k = min(k, (n-1)//2)              # не даём удалить слишком много
+    core = xs[k:n-k]                  # "середина" — остаются центральные значения
+    mean_core = sum(core) / len(core) # среднее по оставшимся
+    return mean_core
+
+# Пример: влияние выброса
+data = [1, 2, 3, 1000]
+simple_mean = sum(data) / len(data)   # обычное среднее
+trimmed = trimmed_mean(data, alpha=0.25)  # усечённое среднее (25% с концов)
+
+print("Обычное среднее =", simple_mean)
+print("Усечённое среднее =", trimmed)
+</code></pre>
+</details>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h2>Часть B. Дискретные распределения: E, D, квантили</h2>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h3>Задание B1. Квантили и медиана для дискретного распределения</h3>
+<p>Пусть случайная величина X принимает значения <code>[0, 1, 2, 10]</code>  
+с вероятностями <code>[0.1, 0.2, 0.6, 0.1]</code>.</p>
+<p>Найдите:
+<ul>
+<li><strong>медиану</strong> — значение, при котором накопленная вероятность впервые достигает 0.5;</li>
+<li><strong>верхний квартиль (0.75-квантиль)</strong> — значение, при котором накопленная вероятность впервые достигает 0.75.</li>
+</ul>
+<strong>⬇️ Напишите свой код в ячейке ниже.</strong></p>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[3]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code3','out3')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out3')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code3')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code3')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code3" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+    <div id="out3" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>💡 Подсказка</summary>
+  <ol>
+    <li>Объедините значения и вероятности в пары <code>(x, p)</code>.</li>
+    <li>Отсортируйте по <code>x</code>, если они не отсортированы.</li>
+    <li>Двигайтесь по списку, накапливая сумму вероятностей <code>S += p</code>.</li>
+    <li>Как только <code>S ≥ q</code>, возвращайте соответствующее значение <code>x</code> — это и есть квантиль уровня <code>q</code>.</li>
+    <li>Для медианы возьмите <code>q = 0.5</code>, для верхнего квартиля — <code>q = 0.75</code>.</li>
+  </ol>
+</details>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>🧩 Посмотреть правильный ответ</summary>
+  <pre><code># Значения и их вероятности
+values = [0, 1, 2, 10]
+probs  = [0.1, 0.2, 0.6, 0.1]
+
+# Объединяем в список пар и сортируем по значениям
+pairs = sorted(zip(values, probs), key=lambda t: t[0])
+
+# Функция для нахождения квантиля q
+def quantile(pairs, q):
+    s = 0.0                              # накапливаем вероятность
+    for v, p in pairs:
+        s += p                           # добавляем вероятность текущего значения
+        if s >= q:                       # как только накопили >= q
+            return v                     # возвращаем соответствующее значение
+    return pairs[-1][0]                  # на случай, если сумма округлилась чуть ниже 1
+
+# Медиана (0.5-квантиль)
+median = quantile(pairs, 0.5)
+
+# Верхний квартиль (0.75-квантиль)
+q3 = quantile(pairs, 0.75)
+
+print("Медиана =", median)
+print("Верхний квартиль =", q3)
+</code></pre>
+</details>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h3>Задание B2. Проверяем теорию на практике: $E[X]$, $D[X]$ и симуляция</h3>
+<p>Для того же распределения:</p>
+<table class="md-table"><thead><tr><th>X</th><th>0</th><th>1</th><th>2</th><th>10</th></tr></thead><tbody><tr><td>P</td><td>0.1</td><td>0.2</td><td>0.6</td><td>0.1</td></tr></tbody></table>
+<ol>
+  <li>Найдите <strong>математическое ожидание</strong> $E[X]$ и <strong>дисперсию</strong> $D[X]$ по формулам.</li>
+  <li>Затем сымитируйте 50000 случайных значений $X$ с такими же вероятностями (можно считать, что мы «подбрасываем» случайную величину $X$ 50000 раз).</li>
+  <li>Сравните результаты симуляции с точными теоретическими значениями.</li>
+</ol>
+
+<strong>⬇️ Напишите свой код в ячейке ниже.</strong>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[4]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code4','out4')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out4')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code4')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code4')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code4" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+    <div id="out4" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>💡 Подсказка</summary>
+  <ol>
+    <li>Теоретически:
+      <ul>
+        <li>$E[X] = \sum x \cdot P(X=x)$</li>
+        <li>$E[X^2] = \sum x^2 \cdot P(X=x)$</li>
+        <li>$D[X] = E[X^2] - (E[X])^2$</li>
+      </ul>
+    </li>
+    <li>Эмпирически:
+      <ul>
+        <li>используйте <code>random.choices(values, weights=probs, k=50000)</code> — это сгенерирует выборку из 50 000 случайных X с заданными вероятностями;</li>
+        <li>вычислите среднее и дисперсию по этой выборке (дисперсия = среднее квадрата отклонений от выборочного среднего).</li>
+      </ul>
+    </li>
+    <li>Сравните, насколько близки результаты.</li>
+  </ol>
+</details>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>🧩 Посмотреть правильный ответ</summary>
+  <pre><code>import random, math
+
+# Задаём значения и вероятности
+values = [0, 1, 2, 10]
+probs  = [0.1, 0.2, 0.6, 0.1]
+
+# --- Теоретические расчёты ---
+# E[X] и E[X^2]
+E  = sum(v * p for v, p in zip(values, probs))        # математическое ожидание
+E2 = sum((v**2) * p for v, p in zip(values, probs))   # ожидание квадрата
+Var = E2 - E**2                                       # дисперсия по формуле D[X] = E[X^2] - (E[X])^2
+
+print("Теоретически:")
+print("E[X]  =", round(E, 4))
+print("D[X]  =", round(Var, 4))
+
+# --- Эмпирическая проверка ---
+# Симуляция 50 000 значений по заданному распределению
+sample = random.choices(values, weights=probs, k=50000)
+
+# Выборочное среднее
+Ex = sum(sample) / len(sample)
+
+# Выборочная дисперсия (по определению)
+Vx = sum((x - Ex)**2 for x in sample) / len(sample)
+
+print("\nПо симуляции:")
+print("E[X]  ≈", round(Ex, 4))
+print("D[X]  ≈", round(Vx, 4))
+
+# --- Сравнение ---
+print("\nРазница в среднем:", abs(E - Ex))
+print("Разница в дисперсии:", abs(Var - Vx))
+</code></pre>
+</details>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h2>Часть C. Корреляция и связь структур</h2>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h3>Задание C1. Создаём зависимые величины (пример положительной корреляции)</h3>
+<p>Рассмотрим две случайные величины:</p>
+<ul>
+<li><strong>$ X $</strong> — сумма очков при броске двух кубиков;</li>
+<li><strong>$ Y $</strong> — эта же сумма, но с небольшим случайным «шумом» (ошибкой измерения), который равен <strong>+1</strong> или <strong>−1</strong> с одинаковой вероятностью.</li>
+</ul>
+Таким образом, $ (Y=X + \varepsilon) $, где $ \varepsilon $ — случайная добавка ±1.  
+Она делает $ Y $ не точно равной $ X $, но <strong>сильно связанной</strong> с ней величиной.
+<p>Наша цель — <strong>оценить корреляцию</strong> между $ X $ и $ Y $ на основе симуляции.</p>
+<strong>⬇️ Напишите свой код в ячейке ниже.</strong>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[5]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code5','out5')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out5')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code5')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code5')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code5" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+    <div id="out5" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>💡 Подсказка</summary>
+  <ol>
+    <li>В цикле моделируйте много пар (X, Y):
+      <ul>
+        <li>X — сумма двух бросков кубика (от 2 до 12);</li>
+        <li>шум ε равен +1 или −1 с равной вероятностью;</li>
+        <li>Y = X + ε.</li>
+      </ul>
+    </li>
+    <li>Для вычисления корреляции нужно:
+      <ul>
+        <li>найти средние значения $\bar{X}$ и $\bar{Y}$,</li>
+        <li>посчитать ковариацию $cov = E[(X-\bar{X})(Y-\bar{Y})]$,</li>
+        <li>найти дисперсии $D[X]$ и $D[Y]$,</li>
+        <li>а затем вычислить $ \rho = \dfrac{cov}{\sqrt{D[X] \cdot D[Y]}} $.</li>
+      </ul>
+    </li>
+    <li>Ожидается, что ρ будет положительной и близкой к 1, но не равной точно 1 (из-за добавленного шума).</li>
+  </ol>
+</details>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>🧩 Посмотреть правильный ответ</summary>
+  <pre><code>import random, math
+
+# --- Симуляция ---
+N = 20000                                   # количество экспериментов (пар X,Y)
+X_vals, Y_vals = [], []
+
+for _ in range(N):
+    # Бросаем два кубика
+    a = random.randint(1, 6)
+    b = random.randint(1, 6)
+    X = a + b                               # сумма очков на кубиках
+
+    # Добавляем случайную "ошибку измерения" (шум): ±1 с равной вероятностью
+    eps = random.choice([-1, 1])
+    Y = X + eps
+
+    # Сохраняем результаты
+    X_vals.append(X)
+    Y_vals.append(Y)
+
+# --- Расчёт средних ---
+X_bar = sum(X_vals) / N
+Y_bar = sum(Y_vals) / N
+
+# --- Ковариация ---
+cov = sum((x - X_bar) * (y - Y_bar) for x, y in zip(X_vals, Y_vals)) / N
+
+# --- Дисперсии D[X] и D[Y] ---
+DX = sum((x - X_bar)**2 for x in X_vals) / N
+DY = sum((y - Y_bar)**2 for y in Y_vals) / N
+
+# --- Корреляция ---
+rho = cov / math.sqrt(DX * DY)
+
+# --- Вывод ---
+print(f"Средние:  E[X]={X_bar:.3f},  E[Y]={Y_bar:.3f}")
+print(f"D[X]={DX:.3f},  D[Y]={DY:.3f}")
+print(f"Ковариация={cov:.3f}")
+print(f"Корреляция ρ ≈ {rho:.4f}")
+</code></pre>
+</details>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h3>Задание C2. Нулевая корреляция ≠ независимость</h3>
+<p>Корреляция измеряет <strong>линейную</strong> зависимость между случайными величинами.  Но если связь <strong>нелинейная</strong>, корреляция может быть близка к нулю, хотя зависимость всё же существует.</p>
+<p>Рассмотрим пример:  
+пусть случайная величина <strong>U</strong> равномерно принимает значения на отрезке от −1 до 1.  
+Определим  
+<ul>
+<li><strong>X = U</strong>,</li>
+<li><strong>Y = U²</strong>.</li>
+</ul>
+Очевидно, что Y полностью зависит от U (и значит, от X),  но зависимость нелинейная — график выглядит как парабола. Проверим, чему равна корреляция между X и Y.</p>
+<strong>⬇️ Напишите свой код в ячейке ниже.</strong>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[6]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code6','out6')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out6')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code6')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code6')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code6" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+    <div id="out6" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>💡 Подсказка</summary>
+  <ol>
+    <li>Сгенерируйте большую выборку значений <code>U</code>, равномерно распределённых от −1 до 1:  
+      <code>U = 2 * random.random() - 1</code>.
+    </li>
+    <li>Для каждой точки вычислите <code>X = U</code> и <code>Y = U**2</code>.</li>
+    <li>Найдите средние, ковариацию и дисперсии, затем корреляцию ρ.</li>
+    <li>Корреляция получится около 0, но X и Y не независимы,  
+      потому что по X можно точно восстановить зависимость <code>Y = X²</code>.
+    </li>
+  </ol>
+</details>
+
+<hr class="sep"/>
+
+<details>
+  <summary>🧩 Посмотреть правильный ответ</summary>
+  <pre><code>import random, math
+
+# --- Генерируем значения ---
+N = 50000
+U = [2 * random.random() - 1 for _ in range(N)]  # равномерно из диапазона [-1, 1]
+
+# Определяем случайные величины X и Y
+X = U                                            # X = U
+Y = [u**2 for u in U]                            # Y = U^2
+
+# --- Средние ---
+EX = sum(X) / N
+EY = sum(Y) / N
+
+# --- Ковариация ---
+cov = sum((x - EX) * (y - EY) for x, y in zip(X, Y)) / N
+
+# --- Дисперсии D[X], D[Y] ---
+DX = sum((x - EX)**2 for x in X) / N
+DY = sum((y - EY)**2 for y in Y) / N
+
+# --- Корреляция ---
+rho = cov / math.sqrt(DX * DY)
+
+# --- Вывод ---
+print(f"E[X]={EX:.3f}, E[Y]={EY:.3f}")
+print(f"D[X]={DX:.3f}, D[Y]={DY:.3f}")
+print(f"Ковариация={cov:.5f}")
+print(f"Корреляция ρ ≈ {rho:.5f}")
+
+# --- Комментарий ---
+print('\\nКорреляция близка к 0, хотя Y полностью зависит от X (Y = X²).')
+print('Это пример НЕЛИНЕЙНОЙ зависимости: корреляция показывает только линейную связь.')
+</code></pre>
+</details>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h2>Часть D. Неравенство Чебышёва и СЗБЧ (эмпирически)</h2>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h3>Задание D1. Проверяем неравенство Чебышёва на практике</h3>
+<strong>Неравенство Чебышёва</strong> утверждает, что большая часть значений X находится <strong>в пределах нескольких стандартных отклонений</strong> от среднего.
+<p>Проверим это на примере <strong>распределения Бернулли (p = 0.3)</strong>:  
+<ul>
+<li>X принимает <strong>1</strong> с вероятностью 0.3 и <strong>0</strong> с вероятностью 0.7;</li>
+<li>$E[X] = p$, $D[X] = p(1 − p)$.</li>
+</ul>
+Сымитируем 50 000 наблюдений и проверим, какая доля значений попадает за пределы одного и двух σ от среднего, и сравним с верхней границей $1/k^2$.</p>
+<strong>⬇️ Напишите свой код в ячейке ниже.</strong>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[7]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code7','out7')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out7')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code7')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code7')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code7" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+    <div id="out7" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>💡 Подсказка</summary>
+  <p>1) Сгенерируйте 50 000 случайных значений X: X = 1 с вероятностью p и X = 0 с вероятностью (1 − p).<br>
+  2) Посчитайте среднее E[X] и дисперсию D[X] = p(1 − p).<br>
+  3) Для k = 1 и k = 2 вычислите долю элементов, для которых $|X − E[X]| ≥ k \cdot \sigma$.<br>
+  4) Сравните эти доли с теоретическими границами $1 / k^2$.</p>
+</details>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>🧩 Посмотреть правильный ответ</summary>
+  <pre><code>import random, math
+
+# --- Параметры распределения Бернулли ---
+p = 0.3                        # вероятность успеха
+N = 50000                      # число наблюдений
+
+# --- Генерация выборки ---
+X = [1 if random.random() < p else 0 for _ in range(N)]
+
+# --- Расчёт характеристик ---
+EX = sum(X) / N                # выборочное среднее
+DX = EX * (1 - EX)             # оценка дисперсии D[X] = p(1-p)
+sigma = math.sqrt(DX)          # стандартное отклонение
+
+# --- Функция для подсчёта доли "отклоняющихся" элементов ---
+def share_ge(k):
+    count = sum(1 for x in X if abs(x - EX) >= k * sigma)
+    return count / N
+
+# --- Проверяем для k = 1 и k = 2 ---
+results = []
+for k in [1, 2]:
+    empirical = share_ge(k)        # эмпирическая доля
+    bound = 1 / (k ** 2)           # граница Чебышёва
+    results.append((k, empirical, bound))
+
+# --- Вывод ---
+print("k | Доля(|X−E[X]|≥kσ) | Граница 1/k²")
+for k, emp, bound in results:
+    print(f"{k}:     {emp:.4f}              {bound:.4f}")
+
+print("\nЗаметьте: фактическая доля всегда меньше или примерно равна границе.")
+print("Это подтверждает неравенство Чебышёва на практике.")
+</code></pre>
+</details>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h3>Задание D2. Закон больших чисел: как среднее "стремится" к вероятности</h3>
+<strong>Суть Закона больших чисел (ЗБЧ):</strong>  
+при большом числе повторений случайных испытаний <strong>среднее значение наблюдений</strong> приближается к <strong>истинному математическому ожиданию</strong>.
+<p>Проверим это на примере <strong>распределения Бернулли (p = 0.4)</strong> — в каждом испытании X принимает:
+<ul>
+<li>1 с вероятностью 0.4 (например, "успех"),</li>
+<li>0 с вероятностью 0.6 ("неудача").</li>
+</ul>
+Постепенно увеличивая число испытаний n, посмотрим, как выборочное среднее $ \overline{X}_n $ приближается к p.</p>
+<strong>⬇️ Напишите свой код в ячейке ниже.</strong>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[8]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code8','out8')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out8')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code8')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code8')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code8" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+    <div id="out8" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>💡 Подсказка</summary>
+  <ol>
+    <li>Сгенерируйте длинную последовательность (например, 50 000 испытаний).  
+        Каждое испытание: <code>X = 1</code> с вероятностью <code>p</code>, иначе <code>0</code>.</li>
+    <li>Для разных префиксов (первых <code>n</code> элементов, например 50, 500, 5000, 50000) вычислите среднее значение.</li>
+    <li>Сравните, как оно приближается к <code>p</code> при росте <code>n</code>.</li>
+  </ol>
+</details>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>🧩 Посмотреть правильный ответ</summary>
+  <pre><code>import random
+
+# --- Параметры ---
+p = 0.4                 # вероятность успеха
+N = 50000               # общее число испытаний
+
+# --- Генерация выборки Бернулли ---
+X = [1 if random.random() < p else 0 for _ in range(N)]
+
+# --- Проверяем среднее на разных длинах выборки ---
+prefixes = [50, 500, 5000, 50000]
+means = []              # сюда будем сохранять результаты
+
+s = 0                   # накапливаем сумму, чтобы не пересчитывать заново
+for i, x in enumerate(X, start=1):
+    s += x
+    if i in prefixes:
+        mean_i = s / i
+        means.append((i, mean_i))
+
+# --- Вывод ---
+print("n | Среднее значение  | Истинное p")
+for n, mean_i in means:
+    print(f"{n:<6} {mean_i:.4f}             {p}")
+
+print("\nМы видим, что при увеличении числа испытаний среднее приближается к p.")
+print("Это и есть наглядная демонстрация Закона больших чисел.")
+</code></pre>
+</details>
+
+</div></section>
+
+  <footer class="note">@ Смирнов И.С.</footer>
+</main>
+
+<script>
+const editors = {};
+document.querySelectorAll('textarea.codearea').forEach(ta=>{
+  const ed = CodeMirror.fromTextArea(ta,{
+    mode:'python', theme:'eclipse', lineNumbers:true,
+    autoCloseBrackets:true, lineWrapping:true, viewportMargin:Infinity
+  });
+  ed.setValue(ta.getAttribute('data-original')||ta.value);
+  editors[ta.id]=ed;
+});
+function copyCode(id){const ed=editors[id];const t=ed?ed.getValue():(document.getElementById(id)?.value||"");navigator.clipboard.writeText(t).then(()=>alert('Код скопирован'))}
+function resetCode(id){const ta=document.getElementById(id);const o=ta.getAttribute('data-original')||'';if(editors[id]) editors[id].setValue(o); else ta.value=o}
+function clearOut(id){const el=document.getElementById(id); if(el) el.innerHTML=''}
+
+let pyReady=(async()=>{const py=await loadPyodide();try{await py.loadPackage(['numpy','pandas','matplotlib']);}catch(e){console.warn('Pkg warn',e)}return py})();
+
+function preprocessForPyodide(code){
+  const lines=code.replaceAll('\r\n','\n').split('\n');
+  const out=[];
+  for(let ln of lines){
+    if(/^\s*[!%]/.test(ln)) out.push('# [ignored colab magic] '+ln);
+    else if(/get_ipython\s*\(/.test(ln)) out.push('# [ignored get_ipython] '+ln);
+    else out.push(ln);
+  }
+  return out.join('\n');
+}
+
+async function runPy(codeId,outId){
+  const out=document.getElementById(outId);
+  out.innerHTML="<span style='opacity:.85'>⏳ Выполняется…</span>";
+  const py=await pyReady;
+  const setup=`
+import sys, io, builtins
+buf_out, buf_err = io.StringIO(), io.StringIO()
+class _W:
+    def __init__(self,b): self.b=b
+    def write(self,s): self.b.write(s)
+    def flush(self): pass
+sys.stdout, sys.stderr = _W(buf_out), _W(buf_err)
+from js import prompt
+def _input(prompt_text=""):
+    r = prompt(str(prompt_text))
+    return "" if r is None else r
+builtins.input = _input
+import matplotlib
+matplotlib.use("module://matplotlib.backends.backend_agg")
+import matplotlib.pyplot as plt
+`;
+  try{
+    await py.runPythonAsync(setup);
+    const code=editors[codeId]?editors[codeId].getValue():(document.getElementById(codeId)?.value||"");
+    const prep=preprocessForPyodide(code);
+    await py.runPythonAsync(prep);
+    const [stdoutText,stderrText,images]=await py.runPythonAsync(`
+import base64, io
+from matplotlib import pyplot as plt
+import matplotlib
+outs = buf_out.getvalue()
+errs = buf_err.getvalue()
+imgs = []
+for f in list(matplotlib._pylab_helpers.Gcf.get_all_fig_managers()):
+    b = io.BytesIO()
+    f.canvas.figure.savefig(b, format='png', dpi=120, bbox_inches='tight')
+    imgs.append(base64.b64encode(b.getvalue()).decode())
+plt.close('all')
+outs, errs, imgs
+`);
+    out.innerHTML="";
+    if(stdoutText && stdoutText.trim()){const pre=document.createElement('pre');pre.textContent=stdoutText;out.appendChild(pre)}
+    if(images && images.length){for(const b64 of images){const img=document.createElement('img');img.src='data:image/png;base64,'+b64;img.style.display='block';img.style.margin='8px 0';out.appendChild(img)}}
+    if(stderrText && stderrText.trim()){const pre=document.createElement('pre');pre.style.color='#ff6b6b';pre.textContent=stderrText;out.appendChild(pre)}
+  }catch(e){
+    out.innerHTML = "<pre style='color:#ff6b6b'></pre>";
+    out.querySelector('pre').textContent = (e && e.message) ? e.message : String(e);
+  }
+}
+</script>
+
+<script>
+(function () {
+  function getEditorValue(textarea) {
+    const wrap = textarea.closest('.editor-wrap');
+    const cmDiv = wrap ? wrap.querySelector('.CodeMirror') : null;
+    const cm = cmDiv && cmDiv.CodeMirror ? cmDiv.CodeMirror : null;
+    return cm && typeof cm.getValue === 'function'
+      ? cm.getValue()
+      : textarea.value || '';
+  }
+
+  function clean(s) {
+    return (s || '').replace(/\r\n/g, '\n').trim();
+  }
+
+  function isPlaceholderOnly(val) {
+    const noSpaces = val.replace(/[ \t]/g, '');
+    if (/^#?ВАШКОДНИЖЕ[:：]?\s*$/i.test(noSpaces)) return true;
+    const lines = val.split('\n').map(l => l.trim());
+    return lines.every(l => l === '' || l.startsWith('#'));
+  }
+
+  function collectUserCode() {
+    const blocks = [];
+    const codeareas = Array.from(document.querySelectorAll('textarea.codearea'));
+
+    codeareas.forEach((ta, idx) => {
+      const current = clean(getEditorValue(ta));
+      const original = clean(ta.getAttribute('data-original'));
+
+      if (current && current !== original && !isPlaceholderOnly(current)) {
+        let cellNum = idx + 1;
+        const header = ta.closest('.editor-wrap')?.querySelector('.cell-header');
+        const badge = header?.querySelector('.badge');
+        const m = badge && badge.textContent ? badge.textContent.match(/\[(\d+)\]/) : null;
+        if (m) cellNum = Number(m[1]);
+
+        blocks.push({
+          num: cellNum,
+          code: current
+        });
+      }
+    });
+
+    blocks.sort((a, b) => a.num - b.num);
+    return blocks;
+  }
+
+  function buildTxt(blocks) {
+    if (!blocks.length) {
+      return '# Решения не найдены: похоже, Вы не изменили ни одну ячейку.';
+    }
+    const parts = blocks.map(b => [
+      `# Ячейка кода №${b.num}:`,
+      '',
+      b.code,
+      ''
+    ].join('\n'));
+    return parts.join('\n');
+  }
+
+  function downloadTxt(filename, text) {
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename || 'Ваши_решения.txt';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 0);
+  }
+
+  function addDownloadButton() {
+    const header = document.querySelector('header.page-title') || document.querySelector('main');
+    if (!header || header.querySelector('#download-solutions-btn')) return;
+
+    const btn = document.createElement('button');
+    btn.id = 'download-solutions-btn';
+    btn.textContent = '💾 Скачать решения';
+    btn.style.cssText = [
+      'margin: 8px 0 0 0',
+      'padding: 8px 12px',
+      'border-radius: 10px',
+      'border: 1px solid #1a73e8',
+      'background: #1a73e8',
+      'color: #fff',
+      'font-size: 14px',
+      'cursor: pointer'
+    ].join(';');
+
+    btn.addEventListener('click', () => {
+      const blocks = collectUserCode();
+      const txt = buildTxt(blocks);
+      downloadTxt('Ваши_решения.txt', txt);
+    });
+
+    header.appendChild(btn);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addDownloadButton);
+  } else {
+    addDownloadButton();
+  }
+})();
+</script>
+
+</body>
+</html>

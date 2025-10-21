@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>N1_Пространство_исходов_события_и_классическая_вероятность</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- CodeMirror -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/eclipse.css">
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/python/python.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/closebrackets.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/comment/comment.js"></script>
+
+<!-- Pyodide -->
+<script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+
+<!-- MathJax -->
+<script>
+window.MathJax = { tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]}, svg: {fontCache: 'global'} };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<style>
+:root {
+  --bg:#fff; --fg:#202124; --muted:#5f6368; --border:#e0e3e7; --accent:#1a73e8;
+  --code-bg:#f8f9fa; --out-bg:#0b1020; --out-fg:#e5e7eb;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--fg)}
+body{font-family:'Roboto',system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+main{max-width:1024px;margin:0 auto;padding:24px 16px 64px}
+header.page-title h1{margin:0 0 12px;font-size:28px}
+
+.cell{margin:16px 0}
+
+/* Markdown */
+.cell.md .md{font-size:16px;line-height:1.65}
+.cell.md .md h1,.cell.md .md h2,.cell.md .md h3,.cell.md .md h4{margin:1.2em 0 .6em;font-weight:700}
+.cell.md .md h1{font-size:1.4em}
+.cell.md .md h2{font-size:1.3em}
+.cell.md .md h3{font-size:1.2em}
+.cell.md .md code{background:#f1f3f4;padding:2px 4px;border-radius:4px;font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace}
+.cell.md .md pre code{background:var(--code-bg);display:block;padding:10px;border:1px solid var(--border);border-radius:8px;white-space:pre-wrap}
+.cell.md .md ul,.cell.md .md ol{margin:.25em 0 1em;padding-left:1.4em}
+.cell.md .md li{margin:.25em 0}
+.cell.md .md li>p{margin:0}
+.md table.md-table{border-collapse:collapse;margin:12px 0;width:auto;max-width:100%}
+.md table.md-table th,.md table.md-table td{border:1px solid var(--border);padding:6px 10px;text-align:left;vertical-align:top}
+.md table.md-table thead th{background:#f6f8fa;font-weight:600}
+.cell.md .md hr.md-hr{
+  border:0;
+  border-top:1px solid var(--border);
+  margin:16px 0;
+}
+
+.cell.md .md blockquote.md-hint{
+  margin:10px 0; padding:10px 12px;
+  border-left:4px solid #8b5cf6;   /* фиолетовая полоска */
+  background:#f5f3ff;               /* светло-фиолетовый фон */
+  border-radius:8px;
+}
+.cell.md .md blockquote p{ margin:0; }
+
+/* collapsible answer */
+.cell.md .md details.md-answer{
+  margin:12px 0;
+  border:1px dashed #c7b8ff;
+  background:#f9f7ff;
+  border-radius:10px;
+  padding:8px 12px;
+}
+.cell.md .md details.md-answer > summary{
+  cursor:pointer;
+  font-weight:600;
+  outline:none;
+  list-style:none;
+}
+.cell.md .md details.md-answer > summary::-webkit-details-marker{ display:none; }
+.cell.md .md details.md-answer > pre{
+  margin:10px 0 0;
+  background:#f4f3ff;
+  border:1px solid #e6e1ff;
+  border-radius:8px;
+  padding:10px;
+  overflow:auto;
+}
+
+
+/* Code cells */
+.cell.code .editor-wrap{border:1px solid var(--border);border-radius:12px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.05);padding-bottom:0;resize:vertical;overflow:auto}
+.cell-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;background:#f8fbff;border-bottom:1px solid var(--border)}
+.badge{color:var(--muted);font-size:12px}
+.actions .btn{appearance:none;padding:6px 10px;font-size:13px;border-radius:8px;cursor:pointer;border:1px solid var(--border);background:#fff;color:#202124}
+.actions .btn.run{border-color:var(--accent);background:var(--accent);color:#fff}
+.actions .btn.clear,.actions .btn.copy,.actions .btn.reset{margin-left:6px}
+
+/* Показываем весь код, ничего не обрезаем */
+.CodeMirror{background:var(--code-bg);border-bottom:1px solid var(--border);font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace;font-size:14px;line-height:1.45;height:auto;max-height:none}
+
+/* Output */
+.output{background:var(--out-bg);color:var(--out-fg);padding:12px;min-height:24px;font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace}
+.output pre{margin:0;white-space:pre-wrap}
+
+hr.sep{margin:24px 0;border:0;border-top:1px solid var(--border)}
+footer.note{color:var(--muted);font-size:13px;margin-top:40px}
+</style>
+</head>
+<body>
+<main>
+  <header class="page-title"><h1>N1 — Пространство исходов, события и классическая вероятность</h1></header> 
+  <section class="cell md"><div class="md">
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<p>В этом ноутбуке  мы отработаем понятия <em>пространства элементарных исходов</em> и <em>событий</em>, а также операции над событиями: объединение, пересечение, дополнение.</p>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h1># Часть A. Построение пространства исходов</h1>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[1]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code1','out1')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out1')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code1')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code1')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code1" class="codearea" data-original="# Перечислим все элементарные исходы при двух бросках кубика.
+# 1) Генерируем все пары (i, j), где i и j — значения кубика от 1 до 6.
+# 2) С помощью спискового включения создаём список всех возможных пар.
+omega = [(i, j) for i in range(1, 7) for j in range(1, 7)]  # 36 исходов
+# 3) Выведем количество исходов и первые 10 элементов для проверки.
+print(len(omega), omega[:10])"># Перечислим все элементарные исходы при двух бросках кубика.
+# 1) Генерируем все пары (i, j), где i и j — значения кубика от 1 до 6.
+# 2) С помощью спискового включения создаём список всех возможных пар.
+omega = [(i, j) for i in range(1, 7) for j in range(1, 7)]  # 36 исходов
+# 3) Выведем количество исходов и первые 10 элементов для проверки.
+print(len(omega), omega[:10])</textarea>
+    <div id="out1" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h2># Задание A1. Пространство исходов тетраэдра</h2>
+Сколько исходов в Ω для двух бросков <strong>тетраэдра</strong> (грани: 1–4)?<br>
+<strong>⬇️ Напишите свой код в ячейке ниже.</strong>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[2]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code2','out2')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out2')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code2')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code2')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code2" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+    <div id="out2" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+<summary>💡 Подсказка</summary>
+<ul>
+<li>Диапазон 1..4 и две независимые позиции (первый и второй бросок).</li>
+<li>Используйте тот же подход, что и для кубика, но диапазон <code>range(1, 5)</code>.</li>
+</ul>
+</details>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+<summary>🧩 Посмотреть правильный ответ</summary>
+<pre><code># Перечисляем все пары (i, j) для двух тетраэдров с гранями 1..4
+omega_t = [(i, j) for i in range(1, 5) for j in range(1, 5)]  # 4*4 исхода
+# Количество исходов:
+n = len(omega_t)  # ожидаем 16
+print(n)
+</code></pre>
+</details>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h1># Часть B. События и операции</h1>
+<p>В этой части мы выделяем <strong>события как подмножества</strong> пространства исходов <code>omega</code>.</p>
+<ul>
+<li><strong>Событие</strong> — это условие на элементарный исход (например: «сумма равна 8 или 9»).</li>
+<li>Мы будем представлять событие как <strong>множество исходов</strong>, где наше условие выполняется.</li>
+<li>Кроме того, будем говорить о <strong>мощности множества исходов события</strong> для оценки вероятности и не только.</li>
+</ul>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[3]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code3','out3')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out3')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code3')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code3')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code3" class="codearea" data-original="# Событие A: «сумма выпавших чисел равна 8 или 9» (для двух кубиков)
+# 1) Строим МНОЖЕСТВО всех пар (i, j) из omega, для которых условие (i + j) ∈ {8, 9} выполняется.
+A = {(i, j) for (i, j) in omega if (i + j) in (8, 9)}
+# 2) Проверяем мощность МНОЖЕСТВА исходов, входящих в событие A (число благоприятных исходов).
+print(&#x27;Количество исходов (мощность множества A):&#x27;, len(A))
+# 3) Покажем несколько примеров исходов события A.
+print(&#x27;Первые 5 исходов события A:&#x27;, list(A)[:5])
+"># Событие A: «сумма выпавших чисел равна 8 или 9» (для двух кубиков)
+# 1) Строим МНОЖЕСТВО всех пар (i, j) из omega, для которых условие (i + j) ∈ {8, 9} выполняется.
+A = {(i, j) for (i, j) in omega if (i + j) in (8, 9)}
+# 2) Проверяем мощность МНОЖЕСТВА исходов, входящих в событие A (число благоприятных исходов).
+print('Количество исходов (мощность множества A):', len(A))
+# 3) Покажем несколько примеров исходов события A.
+print('Первые 5 исходов события A:', list(A)[:5])
+</textarea>
+    <div id="out3" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h2># Задание B1. События B и C</h2>
+Постройте событие <strong>B</strong>: «произведение выпавших чисел кратно 3». Постройте событие <strong>C</strong>: «произведение кратно 5». Затем найдите |B|, |C|, |B \ C| и |C \ B|.<br>
+<strong>⬇️ Напишите свой код в ячейке ниже.</strong>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[4]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code4','out4')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out4')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code4')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code4')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code4" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+    <div id="out4" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+<summary>💡 Подсказка</summary>
+<ul>
+<li>Используйте понимание кратности (остаток по модулю) и операции над множествами.</li>
+<li>Вспомните: <code>x % 3 == 0</code> означает «x кратно 3». Для разностей используйте <code>B - C</code> и <code>C - B</code>.</li>
+</ul>
+</details>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+<summary>🧩 Посмотреть правильный ответ</summary>
+<pre><code># Строим события по определению кратности через остаток от деления
+B = {(i, j) for (i, j) in omega if (i * j) % 3 == 0}  # кратно 3
+C = {(i, j) for (i, j) in omega if (i * j) % 5 == 0}  # кратно 5
+# Мощности событий и их разностей:
+print(len(B), len(C), len(B - C), len(C - B))
+</code></pre>
+</details>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h1># Часть C. Классическая вероятность на конечном Ω</h1>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[5]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code5','out5')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out5')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code5')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code5')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code5" class="codearea" data-original="# Классическая вероятность: P(A) = |A| / |Ω|
+# 1) Мощность Ω — общее число исходов эксперимента
+n = len(omega)
+# 2) Мощность множества исходов события A — число благоприятных исходов
+m = len(A)
+# 3) Вероятность события A как доля благоприятных исходов в Ω
+p = m / n
+print(p)
+"># Классическая вероятность: P(A) = |A| / |Ω|
+# 1) Мощность Ω — общее число исходов эксперимента
+n = len(omega)
+# 2) Мощность множества исходов события A — число благоприятных исходов
+m = len(A)
+# 3) Вероятность события A как доля благоприятных исходов в Ω
+p = m / n
+print(p)
+</textarea>
+    <div id="out5" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h2># Задание C1. Вероятности событий</h2>
+Найдите P(B), P(C) и P(B \ C). Сравните с ручными оценками.<br>
+<strong>⬇️ Напишите свой код в ячейке ниже.</strong>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[6]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code6','out6')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out6')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code6')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code6')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code6" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+    <div id="out6" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+<summary>💡 Подсказка</summary>
+<ul>
+<li>Используйте len(множество)/len(omega) для вероятностей.</li>
+<li><code>len(B)/len(omega)</code> даст P(B). Аналогично для других выражений.</li>
+</ul>
+</details>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+<summary>🧩 Посмотреть правильный ответ</summary>
+<pre><code># Считаем вероятности как доли от размера Ω
+n = len(omega)
+pB = len(B) / n
+pC = len(C) / n
+pB_minus_C = len(B - C) / n
+print(pB, pC, pB_minus_C)
+</code></pre>
+</details>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h1># Часть D. Проверка тождеств для событий</h1>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[7]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code7','out7')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out7')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code7')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code7')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code7" class="codearea" data-original="# Проверим тождество для мощностей множеств событий:
+# |A ∪ B| = |A| + |B| − |A ∩ B|
+# Левая часть — мощность объединения множеств исходов A и B
+left = len(A | B)
+# Правая часть — сумма мощностей минус мощность пересечения
+right = len(A) + len(B) - len(A &amp; B)
+# Сравним значения (должны совпадать)
+print(left, right, left == right)
+"># Проверим тождество для мощностей множеств событий:
+# |A ∪ B| = |A| + |B| − |A ∩ B|
+# Левая часть — мощность объединения множеств исходов A и B
+left = len(A | B)
+# Правая часть — сумма мощностей минус мощность пересечения
+right = len(A) + len(B) - len(A &amp; B)
+# Сравним значения (должны совпадать)
+print(left, right, left == right)
+</textarea>
+    <div id="out7" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h2># Задание для закрепления.</h2>
+Придумайте свой эксперимент (набор цифр/карточек и т.п.), опишите Ω, сформулируйте 2–3 события и проверьте одно тождество для мощностей.<br>
+<strong>⬇️ Напишите свой код в ячейке ниже.</strong>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[8]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code8','out8')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out8')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code8')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code8')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code8" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+    <div id="out8" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+<summary>💡 Подсказка</summary>
+<ul>
+<li>Пример: сформируйте Ω и два события A и B; затем проверьте |A ∪ B| = |A| + |B| − |A ∩ B|.</li>
+<li>Можно взять цифры {1,2,3,4,5} и составлять двузначные числа без повторений.</li>
+</ul>
+</details>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+<summary>🧩 Посмотреть правильный ответ</summary>
+<pre><code># Набросок возможного решения
+digits = [1, 2, 3, 4, 5]                   # исходный набор
+Omega = [(a, b) for a in digits for b in digits if a != b]  # без повторений
+A = {(a, b) for (a, b) in Omega if (10 * a + b) % 2 == 0}   # чётные числа
+B = {(a, b) for (a, b) in Omega if a + b &gt;= 7}              # сумма не меньше 7
+left = len(A | B)
+right = len(A) + len(B) - len(A &amp; B)
+print(left, right, left == right)
+</code></pre>
+</details>
+</div></section>
+
+  <footer class="note">@ Смирнов И.С.</footer>
+</main>
+
+<script>
+const editors = {};
+document.querySelectorAll('textarea.codearea').forEach(ta=>{
+  const ed = CodeMirror.fromTextArea(ta,{
+    mode:'python', theme:'eclipse', lineNumbers:true,
+    autoCloseBrackets:true, lineWrapping:true, viewportMargin:Infinity
+  });
+  ed.setValue(ta.getAttribute('data-original')||ta.value);
+  editors[ta.id]=ed;
+});
+function copyCode(id){const ed=editors[id];const t=ed?ed.getValue():(document.getElementById(id)?.value||"");navigator.clipboard.writeText(t).then(()=>alert('Код скопирован'))}
+function resetCode(id){const ta=document.getElementById(id);const o=ta.getAttribute('data-original')||'';if(editors[id]) editors[id].setValue(o); else ta.value=o}
+function clearOut(id){const el=document.getElementById(id); if(el) el.innerHTML=''}
+
+let pyReady=(async()=>{const py=await loadPyodide();try{await py.loadPackage(['numpy','pandas','matplotlib']);}catch(e){console.warn('Pkg warn',e)}return py})();
+
+function preprocessForPyodide(code){
+  const lines=code.replaceAll('\r\n','\n').split('\n');
+  const out=[];
+  for(let ln of lines){
+    if(/^\s*[!%]/.test(ln)) out.push('# [ignored colab magic] '+ln);
+    else if(/get_ipython\s*\(/.test(ln)) out.push('# [ignored get_ipython] '+ln);
+    else out.push(ln);
+  }
+  return out.join('\n');
+}
+
+async function runPy(codeId,outId){
+  const out=document.getElementById(outId);
+  out.innerHTML="<span style='opacity:.85'>⏳ Выполняется…</span>";
+  const py=await pyReady;
+  const setup=`
+import sys, io, builtins
+buf_out, buf_err = io.StringIO(), io.StringIO()
+class _W:
+    def __init__(self,b): self.b=b
+    def write(self,s): self.b.write(s)
+    def flush(self): pass
+sys.stdout, sys.stderr = _W(buf_out), _W(buf_err)
+from js import prompt
+def _input(prompt_text=""):
+    r = prompt(str(prompt_text))
+    return "" if r is None else r
+builtins.input = _input
+import matplotlib
+matplotlib.use("module://matplotlib.backends.backend_agg")
+import matplotlib.pyplot as plt
+`;
+  try{
+    await py.runPythonAsync(setup);
+    const code=editors[codeId]?editors[codeId].getValue():(document.getElementById(codeId)?.value||"");
+    const prep=preprocessForPyodide(code);
+    await py.runPythonAsync(prep);
+    const [stdoutText,stderrText,images]=await py.runPythonAsync(`
+import base64, io
+from matplotlib import pyplot as plt
+import matplotlib
+outs = buf_out.getvalue()
+errs = buf_err.getvalue()
+imgs = []
+for f in list(matplotlib._pylab_helpers.Gcf.get_all_fig_managers()):
+    b = io.BytesIO()
+    f.canvas.figure.savefig(b, format='png', dpi=120, bbox_inches='tight')
+    imgs.append(base64.b64encode(b.getvalue()).decode())
+plt.close('all')
+outs, errs, imgs
+`);
+    out.innerHTML="";
+    if(stdoutText && stdoutText.trim()){const pre=document.createElement('pre');pre.textContent=stdoutText;out.appendChild(pre)}
+    if(images && images.length){for(const b64 of images){const img=document.createElement('img');img.src='data:image/png;base64,'+b64;img.style.display='block';img.style.margin='8px 0';out.appendChild(img)}}
+    if(stderrText && stderrText.trim()){const pre=document.createElement('pre');pre.style.color='#ff6b6b';pre.textContent=stderrText;out.appendChild(pre)}
+  }catch(e){
+    out.innerHTML = "<pre style='color:#ff6b6b'></pre>";
+    out.querySelector('pre').textContent = (e && e.message) ? e.message : String(e);
+  }
+}
+</script>
+
+<script>
+(function () {
+  function getEditorValue(textarea) {
+    const wrap = textarea.closest('.editor-wrap');
+    const cmDiv = wrap ? wrap.querySelector('.CodeMirror') : null;
+    const cm = cmDiv && cmDiv.CodeMirror ? cmDiv.CodeMirror : null;
+    return cm && typeof cm.getValue === 'function'
+      ? cm.getValue()
+      : textarea.value || '';
+  }
+
+  function clean(s) {
+    return (s || '').replace(/\r\n/g, '\n').trim();
+  }
+
+  function isPlaceholderOnly(val) {
+    const noSpaces = val.replace(/[ \t]/g, '');
+    if (/^#?ВАШКОДНИЖЕ[:：]?\s*$/i.test(noSpaces)) return true;
+    const lines = val.split('\n').map(l => l.trim());
+    return lines.every(l => l === '' || l.startsWith('#'));
+  }
+
+  function collectUserCode() {
+    const blocks = [];
+    const codeareas = Array.from(document.querySelectorAll('textarea.codearea'));
+
+    codeareas.forEach((ta, idx) => {
+      const current = clean(getEditorValue(ta));
+      const original = clean(ta.getAttribute('data-original'));
+
+      if (current && current !== original && !isPlaceholderOnly(current)) {
+        let cellNum = idx + 1;
+        const header = ta.closest('.editor-wrap')?.querySelector('.cell-header');
+        const badge = header?.querySelector('.badge');
+        const m = badge && badge.textContent ? badge.textContent.match(/\[(\d+)\]/) : null;
+        if (m) cellNum = Number(m[1]);
+
+        blocks.push({
+          num: cellNum,
+          code: current
+        });
+      }
+    });
+
+    blocks.sort((a, b) => a.num - b.num);
+    return blocks;
+  }
+
+  function buildTxt(blocks) {
+    if (!blocks.length) {
+      return '# Решения не найдены: похоже, Вы не изменили ни одну ячейку.';
+    }
+    const parts = blocks.map(b => [
+      `# Ячейка кода №${b.num}:`,
+      '',
+      b.code,
+      ''
+    ].join('\n'));
+    return parts.join('\n');
+  }
+
+  function downloadTxt(filename, text) {
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename || 'Ваши_решения.txt';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 0);
+  }
+
+  function addDownloadButton() {
+    const header = document.querySelector('header.page-title') || document.querySelector('main');
+    if (!header || header.querySelector('#download-solutions-btn')) return;
+
+    const btn = document.createElement('button');
+    btn.id = 'download-solutions-btn';
+    btn.textContent = '💾 Скачать решения';
+    btn.style.cssText = [
+      'margin: 8px 0 0 0',
+      'padding: 8px 12px',
+      'border-radius: 10px',
+      'border: 1px solid #1a73e8',
+      'background: #1a73e8',
+      'color: #fff',
+      'font-size: 14px',
+      'cursor: pointer'
+    ].join(';');
+
+    btn.addEventListener('click', () => {
+      const blocks = collectUserCode();
+      const txt = buildTxt(blocks);
+      downloadTxt('Ваши_решения.txt', txt);
+    });
+
+    header.appendChild(btn);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addDownloadButton);
+  } else {
+    addDownloadButton();
+  }
+})();
+</script>
+
+</body>
+</html>

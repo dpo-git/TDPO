@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>N5_Случайные_величины_и_совместные_распределения</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- CodeMirror -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/eclipse.css">
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/python/python.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/closebrackets.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/comment/comment.js"></script>
+
+<!-- Pyodide -->
+<script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+
+<!-- MathJax -->
+<script>
+window.MathJax = { tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]}, svg: {fontCache: 'global'} };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<style>
+:root {
+  --bg:#fff; --fg:#202124; --muted:#5f6368; --border:#e0e3e7; --accent:#1a73e8;
+  --code-bg:#f8f9fa; --out-bg:#0b1020; --out-fg:#e5e7eb;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--fg)}
+body{font-family:'Roboto',system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+main{max-width:1024px;margin:0 auto;padding:24px 16px 64px}
+header.page-title h1{margin:0 0 12px;font-size:28px}
+
+.cell{margin:16px 0}
+
+/* Markdown */
+.cell.md .md{font-size:16px;line-height:1.65}
+.cell.md .md h1,.cell.md .md h2,.cell.md .md h3,.cell.md .md h4{margin:1.2em 0 .6em;font-weight:700}
+.cell.md .md h1{font-size:1.4em}
+.cell.md .md h2{font-size:1.3em}
+.cell.md .md h3{font-size:1.2em}
+.cell.md .md code{background:#f1f3f4;padding:2px 4px;border-radius:4px;font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace}
+.cell.md .md pre code{background:var(--code-bg);display:block;padding:10px;border:1px solid var(--border);border-radius:8px;white-space:pre-wrap}
+.cell.md .md ul,.cell.md .md ol{margin:.25em 0 1em;padding-left:1.4em}
+.cell.md .md li{margin:.25em 0}
+.cell.md .md li>p{margin:0}
+.md table.md-table{border-collapse:collapse;margin:12px 0;width:auto;max-width:100%}
+.md table.md-table th,.md table.md-table td{border:1px solid var(--border);padding:6px 10px;text-align:left;vertical-align:top}
+.md table.md-table thead th{background:#f6f8fa;font-weight:600}
+.cell.md .md hr.md-hr{
+  border:0;
+  border-top:1px solid var(--border);
+  margin:16px 0;
+}
+
+.cell.md .md blockquote.md-hint{
+  margin:10px 0; padding:10px 12px;
+  border-left:4px solid #8b5cf6;   /* фиолетовая полоска */
+  background:#f5f3ff;               /* светло-фиолетовый фон */
+  border-radius:8px;
+}
+.cell.md .md blockquote p{ margin:0; }
+
+/* collapsible answer */
+.cell.md .md details.md-answer{
+  margin:12px 0;
+  border:1px dashed #c7b8ff;
+  background:#f9f7ff;
+  border-radius:10px;
+  padding:8px 12px;
+}
+.cell.md .md details.md-answer > summary{
+  cursor:pointer;
+  font-weight:600;
+  outline:none;
+  list-style:none;
+}
+.cell.md .md details.md-answer > summary::-webkit-details-marker{ display:none; }
+.cell.md .md details.md-answer > pre{
+  margin:10px 0 0;
+  background:#f4f3ff;
+  border:1px solid #e6e1ff;
+  border-radius:8px;
+  padding:10px;
+  overflow:auto;
+}
+
+
+/* Code cells */
+.cell.code .editor-wrap{border:1px solid var(--border);border-radius:12px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.05);padding-bottom:0;resize:vertical;overflow:auto}
+.cell-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;background:#f8fbff;border-bottom:1px solid var(--border)}
+.badge{color:var(--muted);font-size:12px}
+.actions .btn{appearance:none;padding:6px 10px;font-size:13px;border-radius:8px;cursor:pointer;border:1px solid var(--border);background:#fff;color:#202124}
+.actions .btn.run{border-color:var(--accent);background:var(--accent);color:#fff}
+.actions .btn.clear,.actions .btn.copy,.actions .btn.reset{margin-left:6px}
+
+/* Показываем весь код, ничего не обрезаем */
+.CodeMirror{background:var(--code-bg);border-bottom:1px solid var(--border);font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace;font-size:14px;line-height:1.45;height:auto;max-height:none}
+
+/* Output */
+.output{background:var(--out-bg);color:var(--out-fg);padding:12px;min-height:24px;font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace}
+.output pre{margin:0;white-space:pre-wrap}
+
+hr.sep{margin:24px 0;border:0;border-top:1px solid var(--border)}
+footer.note{color:var(--muted);font-size:13px;margin-top:40px}
+</style>
+</head>
+<body>
+<main>
+  <header class="page-title"><h1>N5 — Случайные величины и совместные распределения</h1></header> 
+  <section class="cell md"><div class="md">
+
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<strong>Коротко о теории</strong>  
+<ul>
+<li>Случайная величина (СВ) — это <strong>функция на Ω</strong> (множестве исходов), которая каждому исходу ставит в соответствие число.</li>
+<li>Ряд распределения дискретной СВ — таблица значений <code>x</code> и вероятностей <code>P(X=x)</code>.</li>
+<li>Совместное распределение пары (X, Y) — вероятности <code>P(X=x, Y=y)</code>. Из него получаем <strong>маргинальные</strong> распределения <code>P(X=x)</code> и <code>P(Y=y)</code>.</li>
+<li>Независимость X и Y: <code>P(X=x, Y=y) = P(X=x)·P(Y=y)</code> для всех пар (x, y).</li>
+</ul>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h2># Часть A. Случайные величины как функции на $ \Omega $</h2>
+Мы работаем с двумя бросками кубика. Сначала построим пространство исходов $ \Omega $.  
+Каждый исход — пара <code>(i, j)</code>, где <code>i</code> и <code>j</code> — значения от 1 до 6.
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[1]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code1','out1')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out1')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code1')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code1')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code1" class="codearea" data-original="# Построим Ω (все пары (i, j))
+omega = []                    # создаём пустой список для исходов
+for i in range(1, 7):         # первый кубик: значения 1..6
+    for j in range(1, 7):     # второй кубик: значения 1..6
+        omega.append((i, j))  # добавляем исход в виде пары (i, j)
+print(len(omega))  # 36 — всего 6×6 исходов"># Построим Ω (все пары (i, j))
+omega = []                    # создаём пустой список для исходов
+for i in range(1, 7):         # первый кубик: значения 1..6
+    for j in range(1, 7):     # второй кубик: значения 1..6
+        omega.append((i, j))  # добавляем исход в виде пары (i, j)
+print(len(omega))  # 36 — всего 6×6 исходов</textarea>
+    <div id="out1" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<blockquote class="md-hint">
+  <p>Короткая эквивалентная запись:</p>
+  <pre><code>omega = [(i, j) for i in range(1, 7) for j in range(1, 7)]</code></pre>
+</blockquote>
+Рассмотрим две случайные величины на этих исходах:  
+<ul>
+<li><strong>X</strong> — сумма очков: <code>X = i + j</code></li>
+<li><strong>Y</strong> — максимум из двух бросков: <code>Y = max(i, j)</code></li>
+</ul>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h3>Что такое «словарь (dict)», «ключ» и «значение»?</h3>
+<ul>
+  <li>В Python <strong>словарь</strong> (dictionary, <code>dict</code>) — это структура вида <code>{ключ: значение}</code>.</li>
+  <li>Для ряда распределения удобно хранить вероятности так: <code>pX = {x: P(X=x), ...}</code>.
+    <ul>
+      <li><strong>Ключ</strong> — возможное значение случайной величины (например, <code>7</code>).</li>
+      <li><strong>Значение</strong> — соответствующая вероятность (например, <code>6/36</code>).</li>
+    </ul>
+  </li>
+</ul>
+
+<p><strong>Пример.</strong> Если <code>P(X=7)=6/36</code>, то мы записываем <code>pX[7] = 6/36</code>.<br>
+<strong>Зачем так?</strong> Потом легко обращаться к вероятности по значению: <code>pX[7]</code>, <code>pX[8]</code>, ...<br>
+<strong>Как заполнять словарь?</strong> Сначала считаем, сколько раз встречается каждое значение (частоты), затем делим на 36, получая вероятности.</p>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h3># Задание A1. Постройте частоты значений суммы X</h3>
+Сосчитайте, сколько раз встречается каждое значение суммы <code>X = i + j</code> при переборе всех исходов <code>omega</code>.<br>
+<strong>⬇️ Напишите свой код в ячейке ниже.</strong>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[2]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code2','out2')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out2')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code2')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code2')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code2" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+    <div id="out2" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<section class="cell md"><div class="md">
+  <details>
+    <summary>💡 Подсказка</summary>
+    <ol>
+      <li>Создайте пустой словарь <code>counts_X</code> — здесь будет считаться, сколько раз встречается каждое значение X.<br>
+          Пример структуры: <code>{2: 1, 3: 2, ..., 7: 6, ..., 12: 1}</code></li>
+      <li>Переберите все исходы <code>(i, j)</code> из списка <code>omega</code>.</li>
+      <li>Для каждого исхода вычислите <code>x = i + j</code>.</li>
+      <li>Увеличьте счётчик для ключа <code>x</code>: если <code>x</code> ещё нет в словаре, сначала создать запись <code>0</code>, затем прибавить <code>1</code>.</li>
+      <li>После цикла создайте словарь <code>pX</code> с вероятностями: <code>pX[x] = counts_X[x] / 36</code>.</li>
+    </ol>
+  </details>
+</div></section>
+
+<hr class="sep"/>
+
+<section class="cell md"><div class="md">
+  <details>
+    <summary>🧩 Посмотреть правильный ответ</summary>
+    <pre><code>counts_X = {}                          # словарь: ключ = значение X, значение = сколько раз встретилось
+for (i, j) in omega:                   # перебираем каждый исход ω = (i, j) из пространства Ω
+    x = i + j                          # вычисляем сумму X для этого исхода
+    if x not in counts_X:              # если мы ещё ни разу не видели такое значение X,
+        counts_X[x] = 0                # то сначала создаём запись со счётчиком 0
+    counts_X[x] += 1                   # увеличиваем счётчик для этого X на 1
+
+pX = {}                                # словарь с вероятностями P(X=x)
+for x in counts_X:                     # пробегаем по всем найденным значениям X
+    pX[x] = counts_X[x] / len(omega)   # делим частоту на 36 (размер Ω), получаем вероятность
+
+print(pX)                                      # выводим словарь вероятностей для X
+</code></pre>
+  </details>
+</div></section>
+
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h4># Визуализация распределения X</h4>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[3]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code3','out3')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out3')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code3')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code3')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code3" class="codearea" data-original="import matplotlib.pyplot as plt
+xs = sorted(pX)
+ys = [pX[x] for x in xs]
+plt.figure()
+plt.bar(xs, ys)
+plt.title(&#x27;Распределение X = i + j (точные вероятности)&#x27;)
+plt.xlabel(&#x27;x&#x27;)
+plt.ylabel(&#x27;P(X=x)&#x27;)
+plt.show()">import matplotlib.pyplot as plt
+xs = sorted(pX)
+ys = [pX[x] for x in xs]
+plt.figure()
+plt.bar(xs, ys)
+plt.title('Распределение X = i + j (точные вероятности)')
+plt.xlabel('x')
+plt.ylabel('P(X=x)')
+plt.show()</textarea>
+    <div id="out3" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h2># Часть B. Одномерное распределение $ Y = \max(i, j) $</h2>
+Постройте распределение для <code>Y = max(i, j)</code> аналогично предыдущему шагу.
+<strong>⬇️ Напишите свой код в ячейке ниже.</strong>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[4]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code4','out4')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out4')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code4')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code4')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code4" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+    <div id="out4" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details><summary>💡 Подсказка</summary>
+Используйте <code>y = max(i, j)</code>. Дальше — как в части A.
+</details>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>🧩 Посмотреть правильный ответ</summary>
+  <pre><code>counts_Y = {}                          # словарь: ключ = значение Y, значение = сколько раз встретилось
+for (i, j) in omega:                   # перебираем все исходы из Ω
+    y = i if i >= j else j             # вычисляем максимум без функций: Y = max(i, j)
+    if y not in counts_Y:              # если это значение Y встречается впервые,
+        counts_Y[y] = 0                # создаём запись со счётчиком 0
+    counts_Y[y] += 1                   # увеличиваем счётчик для данного Y
+
+pY = {}                                # словарь вероятностей P(Y=y)
+for y in counts_Y:                     # по всем найденным значениям Y
+    pY[y] = counts_Y[y] / len(omega)   # переводим частоты в вероятности (делим на 36)
+
+print(pY)                              # выводим словарь вероятностей для Y
+</code></pre>
+</details>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h2># Часть C. Совместное распределение $ P(X,Y) $</h2>
+Постройте частоты для пар <code>(X, Y)</code> и переведите их в вероятности.<br>
+<strong>⬇️ Напишите свой код в ячейке ниже.</strong>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[5]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code5','out5')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out5')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code5')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code5')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code5" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+    <div id="out5" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details><summary>💡 Подсказка</summary>
+Двигайтесь как раньше, только ключ словаря теперь пара <code>(x, y)</code>.
+</details>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>🧩 Посмотреть правильный ответ</summary>
+  <pre><code>counts_XY = {}                                      # словарь: ключ = пара (x, y), значение = частота
+for (i, j) in omega:                                # перебираем все исходы Ω
+    x = i + j                                       # вычисляем X
+    y = i if i >= j else j                          # вычисляем Y = max(i, j)
+    pair = (x, y)                                   # пара значений (X, Y)
+    if pair not in counts_XY:                       # если эту пару видим впервые,
+        counts_XY[pair] = 0                         # создаём запись со счётчиком 0
+    counts_XY[pair] += 1                            # увеличиваем счётчик для пары (x, y)
+
+pXY = {}                                            # словарь вероятностей P(X=x, Y=y)
+for pair in counts_XY:                              # проходим по всем парам (x, y)
+    pXY[pair] = counts_XY[pair] / len(omega)        # делим частоту на 36, получаем вероятность
+
+print(list(pXY.items())[:10])                       # покажем первые 10 записей для проверки
+</code></pre>
+</details>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h2># Часть D. Независимость и условные вероятности</h2>
+Проверим, совпадает ли $ P(X,Y) $ с $ P(X)\cdot P(Y) $ для выбранной пары значений. Если нет — X и Y зависимы.
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h3># Задание D1. Проверка на примере $ X=7 $, $ Y=6 $</h3>
+<strong>⬇️ Напишите свой код в ячейке ниже.</strong>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[6]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code6','out6')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out6')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code6')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code6')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code6" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+    <div id="out6" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details><summary>💡 Подсказка</summary>
+Используйте словари <code>pXY</code>, <code>pX</code>, <code>pY</code> и функцию <code>.get</code>.
+</details>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>🧩 Посмотреть правильный ответ</summary>
+  <pre><code>x = 7                                              # фиксируем X = 7
+y = 6                                              # фиксируем Y = 6
+p_xy = pXY.get((x, y), 0)                          # берём совместную вероятность P(X=7, Y=6)
+p_x = pX.get(x, 0)                                 # маргинальная вероятность P(X=7)
+p_y = pY.get(y, 0)                                 # маргинальная вероятность P(Y=6)
+print('P(X=7, Y=6) =', p_xy)                       # выводим совместную
+print('P(X=7) * P(Y=6) =', p_x * p_y)              # выводим произведение маргиналей
+# если равны для всех пар, независимы; иначе — зависимы
+</code></pre>
+</details>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h3># Задание D2. Условное распределение $ P(Y\,|\,X=7) $</h3>
+<strong>⬇️ Напишите свой код в ячейке ниже.</strong>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[7]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code7','out7')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out7')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code7')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code7')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code7" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+    <div id="out7" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>💡 Подсказка</summary>
+  <p>Условное распределение — «строка» таблицы <code>P(X, Y)</code>, нормированная на сумму этой строки.<br>
+  Чтобы найти условное распределение <code>P(Y∣X=7)</code>, нужно:</p>
+  <ol>
+    <li>Перебрать все пары <code>(x, y)</code> из совместного распределения <code>pXY</code>.</li>
+    <li>Оставить только те, где <code>X = 7</code>.</li>
+    <li>Для каждого такого <code>y</code> взять вероятность <code>P(X=7, Y=y)</code>.</li>
+    <li>Найти сумму всех этих вероятностей — это «общая масса» для случая <code>X=7</code>.</li>
+    <li>Разделить каждую частную вероятность на эту сумму.</li>
+  </ol>
+  <p>Так мы получим вероятности <code>P(Y=y∣X=7)</code>, которые в сумме дают 1.</p>
+</details>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>🧩 Посмотреть правильный ответ</summary>
+  <pre><code># x0 — фиксированное значение X, для которого мы ищем распределение Y
+x0 = 7
+
+# cond_counts — сюда будем накапливать вероятности P(X=7, Y=y)
+cond_counts = {}
+
+# cond_total — сумма вероятностей всех случаев, когда X=7 (для нормировки)
+cond_total = 0.0
+
+# Перебираем все пары (x, y) из совместного распределения pXY
+for (x, y), p in pXY.items():
+    if x == x0:                      # выбираем только те, где X=7
+        if y not in cond_counts:     # если значение Y ещё не встречалось — создаём запись
+            cond_counts[y] = 0.0
+        cond_counts[y] += p          # добавляем вероятность P(X=7, Y=y)
+        cond_total += p              # увеличиваем общую сумму вероятностей для X=7
+
+# Теперь нормируем: делим каждую вероятность на cond_total
+# чтобы получить P(Y=y | X=7)
+P_Y_given_X7 = {}
+for y in cond_counts:
+    P_Y_given_X7[y] = cond_counts[y] / cond_total
+
+# Выведем значения в порядке возрастания Y
+for y in sorted(P_Y_given_X7):
+    print(f"P(Y={y} | X=7) = {P_Y_given_X7[y]:.4f}")
+</code></pre>
+</details>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h2>Часть E. Симуляция и сравнение с теорией</h2>
+Смоделируем много бросков и сравним частоты суммы X с точными вероятностями.<br>
+<strong>⬇️ Напишите свой код в ячейке ниже.</strong>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[8]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code8','out8')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out8')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code8')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code8')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code8" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+    <div id="out8" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details><summary>💡 Подсказка</summary>
+Используйте <code>random.randint(1, 6)</code> и аналогичную схему подсчёта.
+</details>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>🧩 Посмотреть правильный ответ</summary>
+  <pre><code># Импортируем модуль random — он позволяет получать случайные числа
+import random
+
+# N — количество экспериментов (пар бросков)
+N = 10000
+
+# sim_counts_X — словарь для подсчёта частот сумм X
+sim_counts_X = {}
+
+# Повторяем эксперимент N раз
+for _ in range(N):
+    # Случайно выбираем значение первого кубика (от 1 до 6)
+    i = random.randint(1, 6)
+    # Случайно выбираем значение второго кубика (от 1 до 6)
+    j = random.randint(1, 6)
+    # Сумма очков на двух кубиках
+    x = i + j
+    # Увеличиваем счётчик для этого значения X
+    sim_counts_X[x] = sim_counts_X.get(x, 0) + 1
+
+# Переводим частоты в вероятности:
+# делим количество случаев для каждого X на общее число экспериментов N
+pX_sim = {x: sim_counts_X.get(x, 0) / N for x in sorted(pX)}
+
+# Выводим сравнение теоретических и смоделированных вероятностей
+print('x :  теоретическая | симуляция')
+for x in sorted(pX):
+    print(f"{x}:  {pX[x]:.4f} | {pX_sim.get(x, 0):.4f}")
+</code></pre>
+</details>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h2># Задания для закрепления</h2>
+<ol>
+  <li><strong>Замените максимум на минимум:</strong> $Y_{min} = \min(i, j)$. Постройте распределения $P(Y_{min})$, $P(X, Y_{min})$.</li>
+  <li><strong>Рассмотрите</strong> $Y_{diff}$ и постройте $P(Y_{diff})$, $P(X, Y_{diff})$. Сравните $P(X, Y_{diff})$ с $P(X) \cdot P(Y_{diff})$ на нескольких парах.</li>
+  <li><strong>Вернитесь к максимуму</strong> $Y_{max} = \max(i, j)$ и найдите $P(Y_{max}\,|\,X=8)$. Сравните с $P(Y_{max}\,|\,X=7)$.</li>
+</ol>
+
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[9]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code9','out9')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out9')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code9')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code9')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code9" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+    <div id="out9" class="output"></div>
+  </div>
+</section>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>💡 Подсказка</summary>
+  <ol>
+    <li>Сначала нужно корректно определить <code>Y</code> для конкретного задания (минимум, разность или максимум).</li>
+    <li>Переберите все исходы <code>omega</code> и посчитайте частоты нужной величины (и, при необходимости, пар <code>(X, Y)</code>).</li>
+    <li>Переведите частоты в вероятности: делите на <code>len(omega)</code>.</li>
+    <li>Если нужно проверить независимость, сравнивайте $P(X, Y)$ с $P(X)\cdot P(Y)$ для нескольких пар.</li>
+    <li>Если нужно условное распределение, соберите все вероятности в «строке» фиксированного $X$, сложите их и поделите каждую на сумму — получится $P(Y \mid X=…)$.</li>
+  </ol>
+</details>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+  <summary>🧩 Посмотреть правильный ответ</summary>
+  <pre><code># ============================================================
+# БЛОК 1. Y_min = min(i, j): одномерное и (по желанию) совместное
+# ============================================================
+
+# 1) Частоты и вероятности для Y_min
+counts_Y_min = {}                                 # ключ = y_min, значение = сколько раз встретился
+for (i, j) in omega:                              # перебираем все 36 исходов
+    y_min = i if i <= j else j                    # минимум без функций
+    counts_Y_min[y_min] = counts_Y_min.get(y_min, 0) + 1
+
+pY_min = {y: counts_Y_min[y] / len(omega)         # переводим частоты в вероятности
+          for y in counts_Y_min}
+
+# (необязательно) 2) Совместное распределение P(X, Y_min), если нужно потренироваться
+counts_XY_min = {}                                # ключ = (x, y_min)
+for (i, j) in omega:
+    x = i + j
+    y_min = i if i <= j else j
+    pair = (x, y_min)
+    counts_XY_min[pair] = counts_XY_min.get(pair, 0) + 1
+
+pXY_min = {pair: counts_XY_min[pair] / len(omega) # вероятности P(X=x, Y_min=y)
+           for pair in counts_XY_min}
+
+# Короткий вывод результата для контроля
+print("P(Y_min):", dict(sorted(pY_min.items())))
+
+
+# ============================================================
+# БЛОК 2. Y_diff = i - j: одномерное, совместное и check независимости
+# ============================================================
+
+# 1) Одномерное распределение P(Y_diff)
+counts_Y_diff = {}                                 # ключ = y_diff = i - j
+for (i, j) in omega:
+    y_diff = i - j
+    counts_Y_diff[y_diff] = counts_Y_diff.get(y_diff, 0) + 1
+
+pY_diff = {y: counts_Y_diff[y] / len(omega)        # P(Y_diff=y)
+           for y in counts_Y_diff}
+
+# 2) Совместное распределение P(X, Y_diff)
+counts_XY_diff = {}                                # ключ = (x, y_diff)
+for (i, j) in omega:
+    x = i + j
+    y_diff = i - j
+    pair = (x, y_diff)
+    counts_XY_diff[pair] = counts_XY_diff.get(pair, 0) + 1
+
+pXY_diff = {pair: counts_XY_diff[pair] / len(omega)
+            for pair in counts_XY_diff}
+
+# 3) Быстрая проверка «независимости» на нескольких парах (если бы были независимы: PXY = PX*PY)
+samples = [(7, 0), (8, 1), (6, -1)]               # характерные пары (x, y_diff)
+print("\nПроверка независимости для Y_diff (несколько пар):")
+for (x, y) in samples:
+    p_xy = pXY_diff.get((x, y), 0)
+    p_prod = pX.get(x, 0) * pY_diff.get(y, 0)
+    print(f"(x={x}, y_diff={y}):  PXY={p_xy:.4f}  |  PX*PY={p_prod:.4f}")
+# Обычно видно, что равенства нет → X и Y_diff зависимы.
+
+
+# ============================================================
+# БЛОК 3. Y_max = max(i, j): условные распределения при X=7 и X=8
+# ============================================================
+
+# Напомним: pXY у нас уже построено раньше для Y = max(i, j) (в основной части ноутбука).
+# Если вы только что работали с Y_min/Y_diff, вернитесь к pXY из части C (там Y был именно максимум).
+# Ниже — прямое вычисление P(Y_max | X=7) и P(Y_max | X=8) по образцу задания D2.
+
+# 1) Собираем «строку» для X = 7 и нормируем
+x0 = 7
+cond_counts_7 = {}                                # сюда сложим P(X=7, Y_max=y)
+total_7 = 0.0
+for (x, y), p in pXY.items():                     # берем ИМЕННО тот pXY, где Y — максимум
+    if x == x0:
+        cond_counts_7[y] = cond_counts_7.get(y, 0.0) + p
+        total_7 += p
+P_Ymax_given_X7 = {y: cond_counts_7[y] / total_7 for y in cond_counts_7}
+
+# 2) Аналогично для X = 8
+x0 = 8
+cond_counts_8 = {}
+total_8 = 0.0
+for (x, y), p in pXY.items():
+    if x == x0:
+        cond_counts_8[y] = cond_counts_8.get(y, 0.0) + p
+        total_8 += p
+P_Ymax_given_X8 = {y: cond_counts_8[y] / total_8 for y in cond_counts_8}
+
+# 3) Выводим обе «строки» для сравнения
+print("\nP(Y_max | X=7):", dict(sorted(P_Ymax_given_X7.items())))
+print("P(Y_max | X=8):", dict(sorted(P_Ymax_given_X8.items())))
+</code></pre>
+</details>
+
+</div></section>
+
+  <footer class="note">@ Смирнов И.С.</footer>
+</main>
+
+<script>
+const editors = {};
+document.querySelectorAll('textarea.codearea').forEach(ta=>{
+  const ed = CodeMirror.fromTextArea(ta,{
+    mode:'python', theme:'eclipse', lineNumbers:true,
+    autoCloseBrackets:true, lineWrapping:true, viewportMargin:Infinity
+  });
+  ed.setValue(ta.getAttribute('data-original')||ta.value);
+  editors[ta.id]=ed;
+});
+function copyCode(id){const ed=editors[id];const t=ed?ed.getValue():(document.getElementById(id)?.value||"");navigator.clipboard.writeText(t).then(()=>alert('Код скопирован'))}
+function resetCode(id){const ta=document.getElementById(id);const o=ta.getAttribute('data-original')||'';if(editors[id]) editors[id].setValue(o); else ta.value=o}
+function clearOut(id){const el=document.getElementById(id); if(el) el.innerHTML=''}
+
+let pyReady=(async()=>{const py=await loadPyodide();try{await py.loadPackage(['numpy','pandas','matplotlib']);}catch(e){console.warn('Pkg warn',e)}return py})();
+
+function preprocessForPyodide(code){
+  const lines=code.replaceAll('\r\n','\n').split('\n');
+  const out=[];
+  for(let ln of lines){
+    if(/^\s*[!%]/.test(ln)) out.push('# [ignored colab magic] '+ln);
+    else if(/get_ipython\s*\(/.test(ln)) out.push('# [ignored get_ipython] '+ln);
+    else out.push(ln);
+  }
+  return out.join('\n');
+}
+
+async function runPy(codeId,outId){
+  const out=document.getElementById(outId);
+  out.innerHTML="<span style='opacity:.85'>⏳ Выполняется…</span>";
+  const py=await pyReady;
+  const setup=`
+import sys, io, builtins
+buf_out, buf_err = io.StringIO(), io.StringIO()
+class _W:
+    def __init__(self,b): self.b=b
+    def write(self,s): self.b.write(s)
+    def flush(self): pass
+sys.stdout, sys.stderr = _W(buf_out), _W(buf_err)
+from js import prompt
+def _input(prompt_text=""):
+    r = prompt(str(prompt_text))
+    return "" if r is None else r
+builtins.input = _input
+
+# --- глушим предупреждения Matplotlib ---
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="matplotlib")
+
+import matplotlib
+matplotlib.use("module://matplotlib.backends.backend_agg")
+import matplotlib.pyplot as plt
+# делаем show «тихим» (изображения всё равно собираем ниже из FigureManager)
+plt.show = lambda *a, **k: None
+`;
+  try{
+    await py.runPythonAsync(setup);
+    const code=editors[codeId]?editors[codeId].getValue():(document.getElementById(codeId)?.value||"");
+    const prep=preprocessForPyodide(code);
+    await py.runPythonAsync(prep);
+    const [stdoutText,stderrText,images]=await py.runPythonAsync(`
+import base64, io
+from matplotlib import pyplot as plt
+import matplotlib
+outs = buf_out.getvalue()
+errs = buf_err.getvalue()
+imgs = []
+for f in list(matplotlib._pylab_helpers.Gcf.get_all_fig_managers()):
+    b = io.BytesIO()
+    f.canvas.figure.savefig(b, format='png', dpi=120, bbox_inches='tight')
+    imgs.append(base64.b64encode(b.getvalue()).decode())
+plt.close('all')
+outs, errs, imgs
+`);
+    out.innerHTML="";
+    if(stdoutText && stdoutText.trim()){
+      const pre=document.createElement('pre');
+      pre.textContent=stdoutText;
+      out.appendChild(pre)
+    }
+    if(images && images.length){
+      for(const b64 of images){
+        const img=document.createElement('img');
+        img.src='data:image/png;base64,'+b64;
+        img.style.display='block';
+        img.style.margin='8px 0';
+        out.appendChild(img)
+      }
+    }
+    if(stderrText && stderrText.trim()){
+      // скрываем типовое предупреждение про backend_agg
+      const onlyBackendWarn=/Matplotlib is currently using module:\/\/matplotlib\.backends\.backend_agg/i.test(stderrText);
+      if(!onlyBackendWarn){
+        const pre=document.createElement('pre');
+        pre.style.color='#ff6b6b';
+        pre.textContent=stderrText;
+        out.appendChild(pre)
+      }
+    }
+  }catch(e){
+    out.innerHTML = "<pre style='color:#ff6b6b'></pre>";
+    out.querySelector('pre').textContent = (e && e.message) ? e.message : String(e);
+  }
+}
+</script>
+
+<script>
+(function () {
+  function getEditorValue(textarea) {
+    const wrap = textarea.closest('.editor-wrap');
+    const cmDiv = wrap ? wrap.querySelector('.CodeMirror') : null;
+    const cm = cmDiv && cmDiv.CodeMirror ? cmDiv.CodeMirror : null;
+    return cm && typeof cm.getValue === 'function'
+      ? cm.getValue()
+      : textarea.value || '';
+  }
+
+  function clean(s) {
+    return (s || '').replace(/\r\n/g, '\n').trim();
+  }
+
+  function isPlaceholderOnly(val) {
+    const noSpaces = val.replace(/[ \t]/g, '');
+    if (/^#?ВАШКОДНИЖЕ[:：]?\s*$/i.test(noSpaces)) return true;
+    const lines = val.split('\n').map(l => l.trim());
+    return lines.every(l => l === '' || l.startsWith('#'));
+  }
+
+  function collectUserCode() {
+    const blocks = [];
+    const codeareas = Array.from(document.querySelectorAll('textarea.codearea'));
+
+    codeareas.forEach((ta, idx) => {
+      const current = clean(getEditorValue(ta));
+      const original = clean(ta.getAttribute('data-original'));
+
+      if (current && current !== original && !isPlaceholderOnly(current)) {
+        let cellNum = idx + 1;
+        const header = ta.closest('.editor-wrap')?.querySelector('.cell-header');
+        const badge = header?.querySelector('.badge');
+        const m = badge && badge.textContent ? badge.textContent.match(/\[(\d+)\]/) : null;
+        if (m) cellNum = Number(m[1]);
+
+        blocks.push({
+          num: cellNum,
+          code: current
+        });
+      }
+    });
+
+    blocks.sort((a, b) => a.num - b.num);
+    return blocks;
+  }
+
+  function buildTxt(blocks) {
+    if (!blocks.length) {
+      return '# Решения не найдены: похоже, Вы не изменили ни одну ячейку.';
+    }
+    const parts = blocks.map(b => [
+      `# Ячейка кода №${b.num}:`,
+      '',
+      b.code,
+      ''
+    ].join('\n'));
+    return parts.join('\n');
+  }
+
+  function downloadTxt(filename, text) {
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename || 'Ваши_решения.txt';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 0);
+  }
+
+  function addDownloadButton() {
+    const header = document.querySelector('header.page-title') || document.querySelector('main');
+    if (!header || header.querySelector('#download-solutions-btn')) return;
+
+    const btn = document.createElement('button');
+    btn.id = 'download-solutions-btn';
+    btn.textContent = '💾 Скачать решения';
+    btn.style.cssText = [
+      'margin: 8px 0 0 0',
+      'padding: 8px 12px',
+      'border-radius: 10px',
+      'border: 1px solid #1a73e8',
+      'background: #1a73e8',
+      'color: #fff',
+      'font-size: 14px',
+      'cursor: pointer'
+    ].join(';');
+
+    btn.addEventListener('click', () => {
+      const blocks = collectUserCode();
+      const txt = buildTxt(blocks);
+      downloadTxt('Ваши_решения.txt', txt);
+    });
+
+    header.appendChild(btn);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addDownloadButton);
+  } else {
+    addDownloadButton();
+  }
+})();
+</script>
+
+</body>
+</html>

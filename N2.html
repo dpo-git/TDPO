@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>N2_Комбинаторика_через_Python_comb_perm_itertools</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- CodeMirror -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/eclipse.css">
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/python/python.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/closebrackets.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/comment/comment.js"></script>
+
+<!-- Pyodide -->
+<script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+
+<!-- MathJax -->
+<script>
+window.MathJax = { tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]}, svg: {fontCache: 'global'} };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<style>
+:root {
+  --bg:#fff; --fg:#202124; --muted:#5f6368; --border:#e0e3e7; --accent:#1a73e8;
+  --code-bg:#f8f9fa; --out-bg:#0b1020; --out-fg:#e5e7eb;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--fg)}
+body{font-family:'Roboto',system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+main{max-width:1024px;margin:0 auto;padding:24px 16px 64px}
+header.page-title h1{margin:0 0 12px;font-size:28px}
+
+.cell{margin:16px 0}
+
+/* Markdown */
+.cell.md .md{font-size:16px;line-height:1.65}
+.cell.md .md h1,.cell.md .md h2,.cell.md .md h3,.cell.md .md h4{margin:1.2em 0 .6em;font-weight:700}
+.cell.md .md h1{font-size:1.4em}
+.cell.md .md h2{font-size:1.3em}
+.cell.md .md h3{font-size:1.2em}
+.cell.md .md code{background:#f1f3f4;padding:2px 4px;border-radius:4px;font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace}
+.cell.md .md pre code{background:var(--code-bg);display:block;padding:10px;border:1px solid var(--border);border-radius:8px;white-space:pre-wrap}
+.cell.md .md ul,.cell.md .md ol{margin:.25em 0 1em;padding-left:1.4em}
+.cell.md .md li{margin:.25em 0}
+.cell.md .md li>p{margin:0}
+.md table.md-table{border-collapse:collapse;margin:12px 0;width:auto;max-width:100%}
+.md table.md-table th,.md table.md-table td{border:1px solid var(--border);padding:6px 10px;text-align:left;vertical-align:top}
+.md table.md-table thead th{background:#f6f8fa;font-weight:600}
+.cell.md .md hr.md-hr{
+  border:0;
+  border-top:1px solid var(--border);
+  margin:16px 0;
+}
+
+.cell.md .md blockquote.md-hint{
+  margin:10px 0; padding:10px 12px;
+  border-left:4px solid #8b5cf6;   /* фиолетовая полоска */
+  background:#f5f3ff;               /* светло-фиолетовый фон */
+  border-radius:8px;
+}
+.cell.md .md blockquote p{ margin:0; }
+
+/* collapsible answer */
+.cell.md .md details.md-answer{
+  margin:12px 0;
+  border:1px dashed #c7b8ff;
+  background:#f9f7ff;
+  border-radius:10px;
+  padding:8px 12px;
+}
+.cell.md .md details.md-answer > summary{
+  cursor:pointer;
+  font-weight:600;
+  outline:none;
+  list-style:none;
+}
+.cell.md .md details.md-answer > summary::-webkit-details-marker{ display:none; }
+.cell.md .md details.md-answer > pre{
+  margin:10px 0 0;
+  background:#f4f3ff;
+  border:1px solid #e6e1ff;
+  border-radius:8px;
+  padding:10px;
+  overflow:auto;
+}
+
+
+/* Code cells */
+.cell.code .editor-wrap{border:1px solid var(--border);border-radius:12px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.05);padding-bottom:0;resize:vertical;overflow:auto}
+.cell-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;background:#f8fbff;border-bottom:1px solid var(--border)}
+.badge{color:var(--muted);font-size:12px}
+.actions .btn{appearance:none;padding:6px 10px;font-size:13px;border-radius:8px;cursor:pointer;border:1px solid var(--border);background:#fff;color:#202124}
+.actions .btn.run{border-color:var(--accent);background:var(--accent);color:#fff}
+.actions .btn.clear,.actions .btn.copy,.actions .btn.reset{margin-left:6px}
+
+/* Показываем весь код, ничего не обрезаем */
+.CodeMirror{background:var(--code-bg);border-bottom:1px solid var(--border);font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace;font-size:14px;line-height:1.45;height:auto;max-height:none}
+
+/* Output */
+.output{background:var(--out-bg);color:var(--out-fg);padding:12px;min-height:24px;font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace}
+.output pre{margin:0;white-space:pre-wrap}
+
+hr.sep{margin:24px 0;border:0;border-top:1px solid var(--border)}
+footer.note{color:var(--muted);font-size:13px;margin-top:40px}
+</style>
+</head>
+<body>
+<main>
+  <header class="page-title"><h1>N2 — Комбинаторика через Python: comb, perm, itertools</h1></header> 
+  <section class="cell md"><div class="md">
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<p>Мы будем считать количества способов двумя путями:</p>
+<ol>
+  <li><strong>Формулами</strong> из комбинаторики (<code>math.comb</code>, <code>math.perm</code>),</li>
+  <li><strong>Перебором</strong> с помощью <code>itertools</code> (чтобы увидеть реальные объекты и сверить логику).</li>
+</ol>
+<p>Перед заданиями — короткие примеры, чтобы Вы могли понять, что именно делает код.</p>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h1># Часть A. Формулы: comb и perm</h1>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[1]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code1','out1')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out1')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code1')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code1')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code1" class="codearea" data-original="# Подключим функции подсчёта из стандартной библиотеки math
+from math import comb, perm  # comb(n, k) — сочетания, perm(n, k) — размещения
+
+# Проверка работы на простых числах с комментариями:
+# Сколько подпоследовательностей из 4 элементов можно выбрать без порядка по 2?
+c_example = comb(4, 2)  # ожидаем 6
+# Сколько способов выбрать 2 элемента из 4 с порядком (размещения)?
+p_example = perm(4, 2)  # ожидаем 12
+
+print(c_example, p_example)  # (6, 12)"># Подключим функции подсчёта из стандартной библиотеки math
+from math import comb, perm  # comb(n, k) — сочетания, perm(n, k) — размещения
+
+# Проверка работы на простых числах с комментариями:
+# Сколько подпоследовательностей из 4 элементов можно выбрать без порядка по 2?
+c_example = comb(4, 2)  # ожидаем 6
+# Сколько способов выбрать 2 элемента из 4 с порядком (размещения)?
+p_example = perm(4, 2)  # ожидаем 12
+
+print(c_example, p_example)  # (6, 12)</textarea>
+    <div id="out1" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<strong>Что означают функции</strong>
+<ul>
+<li><code>comb(n, k)</code> — <strong>без учёта порядка</strong> (сколько подмножеств размера k из n).</li>
+<li><code>perm(n, k)</code> — <strong>с учётом порядка</strong> (сколько упорядоченных наборов из k элементов без повторений).</li>
+</ul>
+Это два базовых «кирпичика» для задач: «выбрать группу» (comb) и «распределить места/роли» (perm).
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h1># Часть B. Инструменты перебора: <code>itertools</code></h1>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<p>В комбинаторике мы считаем, <strong>сколько существует разных вариантов</strong> выбора элементов.
+В Python это удобно делать с помощью модуля <code>itertools</code>, который умеет <strong>перебирать</strong> варианты точно так же, как и мы в наших с Вами головах.</p>
+<p>Ниже — три базовых инструмента и их связь с математикой.</p>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<table class="md-table"><thead><tr><th>Что хотим сделать</th><th>Порядок важен?</th><th>Повторы?</th><th>Инструмент</th><th>Математический смысл</th></tr></thead><tbody><tr><td>Выбрать группу из k элементов</td><td>❌</td><td>❌</td><td><code>it.combinations(iterable, k)</code></td><td>Сочетания <code>C(n, k)</code></td></tr><tr><td>Выбрать и распределить k элементов по ролям</td><td>✅</td><td>❌</td><td><code>it.permutations(iterable, k)</code></td><td>Размещения <code>A(n, k)</code></td></tr><tr><td>Перебрать варианты при независимых выборах (с повторениями)</td><td>✅</td><td>✅</td><td><code>it.product(iterable, repeat=k)</code></td><td>Декартово произведение</td></tr></tbody></table>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h2># 1️⃣ <code>combinations</code> — выбор без учёта порядка</h2>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[2]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code2','out2')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out2')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code2')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code2')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code2" class="codearea" data-original="import itertools as it
+
+# Пример: из четырёх чисел выбрать любые два (порядок не важен)
+pairs = list(it.combinations([1, 2, 3, 4], 2))
+print(pairs)                        # все пары без повторов и без порядка
+print(&quot;Всего сочетаний:&quot;, len(pairs))  # ожидаем C(4,2) = 6">import itertools as it
+
+# Пример: из четырёх чисел выбрать любые два (порядок не важен)
+pairs = list(it.combinations([1, 2, 3, 4], 2))
+print(pairs)                        # все пары без повторов и без порядка
+print("Всего сочетаний:", len(pairs))  # ожидаем C(4,2) = 6</textarea>
+    <div id="out2" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h2># 2️⃣ <code>permutations</code> — выбор с учётом порядка</h2>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[3]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code3','out3')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out3')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code3')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code3')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code3" class="codearea" data-original="# Пример: выбрать двух и назначить порядок (например, &quot;первый&quot;/&quot;второй&quot;)
+perm_pairs = list(it.permutations([1, 2, 3], 2))
+print(perm_pairs)                     # упорядоченные пары: (1,2) и (2,1) — разные
+print(&quot;Всего размещений:&quot;, len(perm_pairs))  # A(3,2) = 6"># Пример: выбрать двух и назначить порядок (например, "первый"/"второй")
+perm_pairs = list(it.permutations([1, 2, 3], 2))
+print(perm_pairs)                     # упорядоченные пары: (1,2) и (2,1) — разные
+print("Всего размещений:", len(perm_pairs))  # A(3,2) = 6</textarea>
+    <div id="out3" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h2># 3️⃣ <code>product</code> — перебор с повторениями (независимые выборы)</h2>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[4]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code4','out4')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out4')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code4')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code4')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code4" class="codearea" data-original="# Пример: все тройки из значений [1, 2] с повторениями (как 3 &quot;независимых выбора&quot;)
+prod_example = list(it.product([1, 2], repeat=3))
+print(prod_example)
+print(&quot;Всего комбинаций:&quot;, len(prod_example))   # 2**3 = 8"># Пример: все тройки из значений [1, 2] с повторениями (как 3 "независимых выбора")
+prod_example = list(it.product([1, 2], repeat=3))
+print(prod_example)
+print("Всего комбинаций:", len(prod_example))   # 2**3 = 8</textarea>
+    <div id="out4" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h2># 🔗 Переходим к практике:</h2>
+Давайте рассмотрим простой учебный пример, чтобы связать теорию и практику.
+Мы выберем тройки учеников <strong>без порядка</strong>, а затем <strong>назначим председателя</strong> в каждой тройке.
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[5]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code5','out5')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out5')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code5')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code5')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code5" class="codearea" data-original="import itertools as it
+
+students = [&quot;Аня&quot;, &quot;Борис&quot;, &quot;Вика&quot;, &quot;Глеб&quot;]
+
+# 1) Составы по 3 человека (без порядка)
+trios = list(it.combinations(students, 3))
+print(&quot;Все тройки:&quot;, trios)
+print(&quot;Сколько троек:&quot;, len(trios))
+
+# 2) Для каждой тройки назначим председателя (порядок уже важен)
+ways = 0
+for trio in trios:
+    for chair in trio:
+        ways += 1
+print(&quot;Всего способов (тройка + председатель):&quot;, ways)">import itertools as it
+
+students = ["Аня", "Борис", "Вика", "Глеб"]
+
+# 1) Составы по 3 человека (без порядка)
+trios = list(it.combinations(students, 3))
+print("Все тройки:", trios)
+print("Сколько троек:", len(trios))
+
+# 2) Для каждой тройки назначим председателя (порядок уже важен)
+ways = 0
+for trio in trios:
+    for chair in trio:
+        ways += 1
+print("Всего способов (тройка + председатель):", ways)</textarea>
+    <div id="out5" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h1># Часть C. Ещё пример</h1>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h2># Пример: совет из 4 учеников и назначение председателя</h2>
+Сначала выберем <strong>состав</strong> совета (по 3 человека из 4), затем для каждой тройки назначим <strong>председателя</strong>.
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[6]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code6','out6')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out6')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code6')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code6')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code6" class="codearea" data-original="import itertools as it
+
+students = [&quot;Аня&quot;, &quot;Борис&quot;, &quot;Вика&quot;, &quot;Глеб&quot;]  # имена для наглядности
+
+# 1) Составы по 3 человека (без порядка)
+trios = list(it.combinations(students, 3))   # все уникальные тройки
+print(&quot;Всего троек:&quot;, len(trios))
+print(trios)
+
+# 2) Назначаем председателя внутри каждой тройки
+ways = 0
+for trio in trios:                # берём конкретную тройку
+    for chair in trio:            # выбираем, кто будет председателем
+        ways += 1                 # считаем один способ назначения
+
+print(&quot;Всего способов (тройка + председатель):&quot;, ways)">import itertools as it
+
+students = ["Аня", "Борис", "Вика", "Глеб"]  # имена для наглядности
+
+# 1) Составы по 3 человека (без порядка)
+trios = list(it.combinations(students, 3))   # все уникальные тройки
+print("Всего троек:", len(trios))
+print(trios)
+
+# 2) Назначаем председателя внутри каждой тройки
+ways = 0
+for trio in trios:                # берём конкретную тройку
+    for chair in trio:            # выбираем, кто будет председателем
+        ways += 1                 # считаем один способ назначения
+
+print("Всего способов (тройка + председатель):", ways)</textarea>
+    <div id="out6" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<p>💬 <em>Логика та же, что и в формулах:</em>
+<ul>
+<li>сначала <strong>comb(4, 3)</strong> — выбрать тройку,</li>
+<li>затем умножаем на <strong>3</strong> — назначить одного председателя.</li>
+</ul></p>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h2># Задания для закрепления. Совет учеников и роли в нём</h2>
+В классе 12 человек. Сколько способов выбрать <strong>совет из 3 человек</strong> и <strong>назначить председателя</strong>?
+Решите <strong>двумя способами</strong>: (1) формулы <code>comb/perm</code>, (2) перебор <code>itertools</code>.
+<p>Поясните словами, почему формула работает так же, как перебор.</p>
+<strong>⬇️ Напишите свой код в ячейке ниже.</strong>
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[7]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code7','out7')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out7')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code7')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code7')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code7" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+    <div id="out7" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+<summary>💡 Подсказка</summary>
+<ul>
+<li>Сначала состав совета (comb), затем выбор председателя из этих троих (×3).</li>
+<li>В переборе: сначала <code>it.combinations(range(12), 3)</code>, внутри — перебор председателя.</li>
+</ul>
+</details>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<details>
+<summary>🧩 Посмотреть правильный ответ</summary>
+<pre><code>from math import comb
+import itertools as it
+
+# 1) Формула: выбираем троих из 12 и назначаем одного председателем
+ways_formula = comb(12, 3) * 3 # comb(12,3) составы * 3 возможных председателя
+
+# 2) Перебор с itertools: комбинации по 3 и выбор председателя
+students = list(range(12))                        # обозначим учеников числами 0..11
+ways_enum = 0                                     # счётчик способов
+for trio in it.combinations(students, 3): # все тройки (без порядка)
+    for chair in trio:                            # выбираем председателя внутри тройки
+        ways_enum += 1                            # один способ найден
+
+print(ways_formula, ways_enum)
+</code></pre></p>
+</details>
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<strong>Смысловое сравнение</strong>
+<ul>
+<li>Формула <code>comb(12, 3) * 3</code> отражает: «выбрать состав» × «назначить председателя».</li>
+<li>Перебор даёт тот же результат, потому что он фактически делает <strong>то же самое</strong>, только явно перечисляя варианты.</li>
+</ul>
+</div></section>
+
+  <footer class="note">@ Смирнов И.С.</footer>
+</main>
+
+<script>
+const editors = {};
+document.querySelectorAll('textarea.codearea').forEach(ta=>{
+  const ed = CodeMirror.fromTextArea(ta,{
+    mode:'python', theme:'eclipse', lineNumbers:true,
+    autoCloseBrackets:true, lineWrapping:true, viewportMargin:Infinity
+  });
+  ed.setValue(ta.getAttribute('data-original')||ta.value);
+  editors[ta.id]=ed;
+});
+function copyCode(id){const ed=editors[id];const t=ed?ed.getValue():(document.getElementById(id)?.value||"");navigator.clipboard.writeText(t).then(()=>alert('Код скопирован'))}
+function resetCode(id){const ta=document.getElementById(id);const o=ta.getAttribute('data-original')||'';if(editors[id]) editors[id].setValue(o); else ta.value=o}
+function clearOut(id){const el=document.getElementById(id); if(el) el.innerHTML=''}
+
+let pyReady=(async()=>{const py=await loadPyodide();try{await py.loadPackage(['numpy','pandas','matplotlib']);}catch(e){console.warn('Pkg warn',e)}return py})();
+
+function preprocessForPyodide(code){
+  const lines=code.replaceAll('\r\n','\n').split('\n');
+  const out=[];
+  for(let ln of lines){
+    if(/^\s*[!%]/.test(ln)) out.push('# [ignored colab magic] '+ln);
+    else if(/get_ipython\s*\(/.test(ln)) out.push('# [ignored get_ipython] '+ln);
+    else out.push(ln);
+  }
+  return out.join('\n');
+}
+
+async function runPy(codeId,outId){
+  const out=document.getElementById(outId);
+  out.innerHTML="<span style='opacity:.85'>⏳ Выполняется…</span>";
+  const py=await pyReady;
+  const setup=`
+import sys, io, builtins
+buf_out, buf_err = io.StringIO(), io.StringIO()
+class _W:
+    def __init__(self,b): self.b=b
+    def write(self,s): self.b.write(s)
+    def flush(self): pass
+sys.stdout, sys.stderr = _W(buf_out), _W(buf_err)
+from js import prompt
+def _input(prompt_text=""):
+    r = prompt(str(prompt_text))
+    return "" if r is None else r
+builtins.input = _input
+import matplotlib
+matplotlib.use("module://matplotlib.backends.backend_agg")
+import matplotlib.pyplot as plt
+`;
+  try{
+    await py.runPythonAsync(setup);
+    const code=editors[codeId]?editors[codeId].getValue():(document.getElementById(codeId)?.value||"");
+    const prep=preprocessForPyodide(code);
+    await py.runPythonAsync(prep);
+    const [stdoutText,stderrText,images]=await py.runPythonAsync(`
+import base64, io
+from matplotlib import pyplot as plt
+import matplotlib
+outs = buf_out.getvalue()
+errs = buf_err.getvalue()
+imgs = []
+for f in list(matplotlib._pylab_helpers.Gcf.get_all_fig_managers()):
+    b = io.BytesIO()
+    f.canvas.figure.savefig(b, format='png', dpi=120, bbox_inches='tight')
+    imgs.append(base64.b64encode(b.getvalue()).decode())
+plt.close('all')
+outs, errs, imgs
+`);
+    out.innerHTML="";
+    if(stdoutText && stdoutText.trim()){const pre=document.createElement('pre');pre.textContent=stdoutText;out.appendChild(pre)}
+    if(images && images.length){for(const b64 of images){const img=document.createElement('img');img.src='data:image/png;base64,'+b64;img.style.display='block';img.style.margin='8px 0';out.appendChild(img)}}
+    if(stderrText && stderrText.trim()){const pre=document.createElement('pre');pre.style.color='#ff6b6b';pre.textContent=stderrText;out.appendChild(pre)}
+  }catch(e){
+    out.innerHTML = "<pre style='color:#ff6b6b'></pre>";
+    out.querySelector('pre').textContent = (e && e.message) ? e.message : String(e);
+  }
+}
+</script>
+
+<script>
+(function () {
+  function getEditorValue(textarea) {
+    const wrap = textarea.closest('.editor-wrap');
+    const cmDiv = wrap ? wrap.querySelector('.CodeMirror') : null;
+    const cm = cmDiv && cmDiv.CodeMirror ? cmDiv.CodeMirror : null;
+    return cm && typeof cm.getValue === 'function'
+      ? cm.getValue()
+      : textarea.value || '';
+  }
+
+  function clean(s) {
+    return (s || '').replace(/\r\n/g, '\n').trim();
+  }
+
+  function isPlaceholderOnly(val) {
+    const noSpaces = val.replace(/[ \t]/g, '');
+    if (/^#?ВАШКОДНИЖЕ[:：]?\s*$/i.test(noSpaces)) return true;
+    const lines = val.split('\n').map(l => l.trim());
+    return lines.every(l => l === '' || l.startsWith('#'));
+  }
+
+  function collectUserCode() {
+    const blocks = [];
+    const codeareas = Array.from(document.querySelectorAll('textarea.codearea'));
+
+    codeareas.forEach((ta, idx) => {
+      const current = clean(getEditorValue(ta));
+      const original = clean(ta.getAttribute('data-original'));
+
+      if (current && current !== original && !isPlaceholderOnly(current)) {
+        let cellNum = idx + 1;
+        const header = ta.closest('.editor-wrap')?.querySelector('.cell-header');
+        const badge = header?.querySelector('.badge');
+        const m = badge && badge.textContent ? badge.textContent.match(/\[(\d+)\]/) : null;
+        if (m) cellNum = Number(m[1]);
+
+        blocks.push({
+          num: cellNum,
+          code: current
+        });
+      }
+    });
+
+    blocks.sort((a, b) => a.num - b.num);
+    return blocks;
+  }
+
+  function buildTxt(blocks) {
+    if (!blocks.length) {
+      return '# Решения не найдены: похоже, Вы не изменили ни одну ячейку.';
+    }
+    const parts = blocks.map(b => [
+      `# Ячейка кода №${b.num}:`,
+      '',
+      b.code,
+      ''
+    ].join('\n'));
+    return parts.join('\n');
+  }
+
+  function downloadTxt(filename, text) {
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename || 'Ваши_решения.txt';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 0);
+  }
+
+  function addDownloadButton() {
+    const header = document.querySelector('header.page-title') || document.querySelector('main');
+    if (!header || header.querySelector('#download-solutions-btn')) return;
+
+    const btn = document.createElement('button');
+    btn.id = 'download-solutions-btn';
+    btn.textContent = '💾 Скачать решения';
+    btn.style.cssText = [
+      'margin: 8px 0 0 0',
+      'padding: 8px 12px',
+      'border-radius: 10px',
+      'border: 1px solid #1a73e8',
+      'background: #1a73e8',
+      'color: #fff',
+      'font-size: 14px',
+      'cursor: pointer'
+    ].join(';');
+
+    btn.addEventListener('click', () => {
+      const blocks = collectUserCode();
+      const txt = buildTxt(blocks);
+      downloadTxt('Ваши_решения.txt', txt);
+    });
+
+    header.appendChild(btn);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addDownloadButton);
+  } else {
+    addDownloadButton();
+  }
+})();
+</script>
+
+</body>
+</html>
