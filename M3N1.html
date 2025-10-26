@@ -1,0 +1,606 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Подбор параметра a: перебор, точность</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- CodeMirror -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/eclipse.css">
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/python/python.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/closebrackets.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/comment/comment.js"></script>
+
+<!-- Pyodide -->
+<script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+
+<!-- MathJax -->
+<script>
+window.MathJax = { tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]}, svg: {fontCache: 'global'} };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<style>
+:root {
+  --bg:#fff;
+  --fg:#202124;
+  --muted:#5f6368;
+  --border:#e0e3e7;
+  --accent:#1a73e8;
+  --code-bg:#f8f9fa;
+  --out-bg:#0b1020;
+  --out-fg:#e5e7eb;
+}
+
+/* базовая раскладка */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--fg)}
+body{font-family:'Roboto',system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+main{max-width:1024px;margin:0 auto;padding:24px 16px 64px}
+header.page-title h1{margin:0 0 8px;font-size:28px;font-weight:700;line-height:1.25}
+
+.header-actions{margin-top:8px;}
+.header-actions .btn{
+  appearance:none;
+  padding:6px 10px;
+  font-size:13px;
+  border-radius:8px;
+  cursor:pointer;
+  line-height:1.2;
+  border:1px solid var(--accent);
+  background:var(--accent);
+  color:#fff;
+}
+
+/* ячейки и разделители */
+.cell{margin:16px 0}
+hr.sep{margin:24px 0;border:0;border-top:1px solid var(--border)}
+
+/* markdown-блоки */
+.cell.md .md{font-size:16px;line-height:1.65}
+.cell.md .md h1,.cell.md .md h2,.cell.md .md h3,.cell.md .md h4{margin:1.2em 0 .6em;font-weight:700}
+.cell.md .md h1{font-size:1.4em}
+.cell.md .md h2{font-size:1.3em}
+.cell.md .md h3{font-size:1.2em}
+.cell.md .md code{
+  background:#f1f3f4;
+  padding:2px 4px;
+  border-radius:4px;
+  font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace
+}
+.cell.md .md pre code{
+  background:var(--code-bg);
+  display:block;
+  padding:10px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  white-space:pre-wrap
+}
+.cell.md .md ul,.cell.md .md ol{margin:.25em 0 1em;padding-left:1.4em}
+.cell.md .md li{margin:.25em 0}
+.cell.md .md li>p{margin:0}
+
+.cell.md .md blockquote.md-hint{
+  margin:10px 0;
+  padding:10px 12px;
+  border-left:4px solid #8b5cf6;
+  background:#f5f3ff;
+  border-radius:8px;
+}
+.cell.md .md blockquote.md-hint p{margin:0}
+
+/* details (подсказка / решение) в "чистом" стиле */
+.cell.md .md details{
+  margin:12px 0;
+  font-size:16px;
+  line-height:1.5;
+}
+.cell.md .md details summary{
+  cursor:pointer;
+  font-weight:600;
+  line-height:1.4;
+  margin-bottom:6px;
+}
+.cell.md .md details pre{
+  margin:0;
+  background:#f8f9fa;
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:10px;
+  overflow:auto;
+  font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace;
+  font-size:14px;
+  line-height:1.45;
+}
+
+/* code cell */
+.cell.code .editor-wrap{
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 1px 2px rgba(0,0,0,.05);
+  padding-bottom:0;
+  resize:vertical;
+  overflow:auto;
+}
+.cell-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:8px 12px;
+  background:#f8fbff;
+  border-bottom:1px solid var(--border);
+  flex-wrap:wrap;
+}
+.badge{color:var(--muted);font-size:12px;white-space:nowrap}
+.actions{display:flex;flex-wrap:wrap;gap:6px}
+.actions .btn{
+  appearance:none;
+  padding:6px 10px;
+  font-size:13px;
+  border-radius:8px;
+  cursor:pointer;
+  border:1px solid var(--border);
+  background:#fff;
+  color:#202124;
+  line-height:1.2;
+}
+.actions .btn.run{
+  border:1px solid var(--accent);
+  background:var(--accent);
+  color:#fff;
+}
+.actions .btn.clear,
+.actions .btn.download,
+.actions .btn.copy,
+.actions .btn.reset{
+  margin-left:6px;
+}
+
+/* редактор кода */
+.CodeMirror{
+  background:var(--code-bg);
+  border-bottom:1px solid var(--border);
+  font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace;
+  font-size:14px;
+  line-height:1.45;
+  height:auto;
+  max-height:none;
+}
+
+/* вывод */
+.output{
+  background:var(--out-bg);
+  color:var(--out-fg);
+  padding:12px;
+  min-height:24px;
+  font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace;
+  font-size:14px;
+  line-height:1.45;
+  border-bottom-left-radius:12px;
+  border-bottom-right-radius:12px;
+}
+.output pre{margin:0;white-space:pre-wrap}
+.output img{
+  display:block;
+  margin:8px 0;
+  max-width:100%;
+  height:auto;
+  border:1px solid #222;
+  border-radius:6px;
+  background:#fff;
+}
+
+footer.note{
+  color:var(--muted);
+  font-size:13px;
+  margin-top:40px
+}
+</style>
+</head>
+<body>
+<main>
+  <header class="page-title">
+    <h1>N1 — Подбор параметра a: перебор, точность</h1>
+    <div class="header-actions">
+      <button class="btn" onclick="saveAnswersTxt()">💾 Скачать решения</button>
+    </div>
+  </header>
+
+  <section class="cell md"><div class="md">
+    <h1># Что мы сделаем в ходе выполнения этого задания?</h1>
+    <p>Здесь мы хотим получить <strong>своё уникальное число <code>a_1</code></strong>, которое будет использоваться как параметр в следующем задании.
+    То есть <code>a_1</code> — это часть нашей «змейки».</p>
+
+    <p>Мы рассматриваем функцию
+    \( f(x) = \sqrt{x+1} + \frac{1}{2}\sin(3x) \)
+    и семейство функций
+    \( g(x) = a \cdot f(x) + a^2 \),
+    где \(a\) — параметр (пока неизвестный).</p>
+
+    <p>Мы хотим подобрать такое значение параметра \(a\), чтобы
+    значение \(g(x)\) в точке \(x = 1\) получилось как можно ближе к целевому значению
+    <code>y*</code> = 5.
+    То есть мы стараемся выполнить условие
+    \( g(1) \approx 5 \),
+    где
+    \( g(1) = a \cdot f(1) + a^2 \).</p>
+
+    <blockquote class="md-hint">
+      <p><strong>Идея простыми словами.</strong><br>
+      Мы перебираем разные значения параметра <code>a</code> и смотрим,
+      насколько сильно полученное значение отличается от числа 5 именно в точке <code>x = 1</code>.
+      Будем реализовывать идею «подбор параметра перебором».</p>
+    </blockquote>
+
+    <p><strong>Как искать нужный параметр \(a\):</strong></p>
+    <ul>
+      <li>Перебрать все значения \(a\) от \(-5,0\) до \(5,0\) с шагом \(0,001\).</li>
+      <li>Для каждого значения посчитать \(g(1) = a \cdot f(1) + a^2\).</li>
+      <li>Вычислить ошибку попадания в цель: \(|g(1) - 5|\).</li>
+      <li>Выбрать тот \(a\), у которого ошибка минимальна.</li>
+    </ul>
+
+    <p>Округлите найденное значение параметра \(a\) до 4 знаков после запятой
+    и назовите это числом <code>a_1</code>.
+    Это и будет ваш уникальный результат задания №1.</p>
+  </div></section>
+
+  <hr class="sep"/>
+
+  <section class="cell md"><div class="md">
+    <h2># Задание №1</h2>
+    <p>Ваша программа должна:</p>
+    <ol>
+      <li>Определить функцию <code>f(x) = sqrt(x+1) + 0.5*sin(3*x)</code>.</li>
+      <li>Перебрать значения <code>a</code> от -5.0 до 5.0 с шагом 0.001.</li>
+      <li>Для каждого <code>a</code> вычислить
+        <code>g(1) = a * f(1) + a**2</code>
+        и ошибку <code>abs(g(1) - 5)</code>.</li>
+      <li>Найти лучший <code>a</code> — при котором ошибка минимальна.</li>
+      <li>Округлить значение <code>a</code> до 4 знаков и записать его как <code>a_1</code>.</li>
+      <li>Вывести на экран строку вида
+        <code>ВАШЕ ЧИСЛО a_1 = ...</code>.</li>
+    </ol>
+
+    <p>После запуска кода вы увидите свой <code>a_1</code> в чёрном окне вывода.
+    Это число нужно запомнить или куда-нибудь записать, так как оно пригодится в задании №2.</p>
+
+    <p>Совет: после запуска кода можно нажать кнопку:</p>
+
+	<div class="actions" style="margin:8px 0;">
+  	<button class="btn download" onclick="saveOutputTxt('out1','№1.txt')">
+	Скачать результат
+  	</button>
+	</div>
+
+	<p>Это сохранит окно вывода (ваш <code>a_1</code>) в .txt-файл,
+	чтобы вы точно его не потеряли.</p>
+
+    <p><strong>⬇️ Напишите свой код в ячейке ниже.</strong></p>
+  </div></section>
+
+  <hr class="sep"/>
+
+  <section class="cell code">
+    <div class="editor-wrap">
+      <div class="cell-header">
+        <span class="badge">In&nbsp;[1]</span>
+        <div class="actions">
+          <button class="btn run" onclick="runPy('code1','out1')">▶ Запустить</button>
+          <button class="btn clear" onclick="clearOut('out1')">Очистить вывод</button>
+          <button class="btn download" onclick="saveOutputTxt('out1','№1.txt')">Скачать результат</button>
+          <button class="btn copy" onclick="copyCode('code1')">Скопировать код</button>
+          <button class="btn reset" onclick="resetCode('code1')">Сброс</button>
+        </div>
+      </div>
+
+      <textarea id="code1" class="codearea" data-original="# ВАШ КОД НИЖЕ:"></textarea>
+
+      <div id="out1" class="output"></div>
+    </div>
+  </section>
+
+  <hr class="sep"/>
+
+  <section class="cell md"><div class="md">
+    <details>
+      <summary>💡 Подсказка</summary>
+      <ul>
+        <li>Сначала вычислите <code>f(1)</code> один раз и сохраните в переменную <code>f_x0</code>.</li>
+        <li>В цикле по <code>a</code> вычисляйте <code>g(1) = a * f_x0 + a**2</code>.</li>
+        <li>Ошибка — это <code>abs(g(1) - 5)</code>.</li>
+        <li>Сравнивайте ошибку с минимальной на данный момент и при необходимости обновляйте соотвествующие значения.</li>
+        <li>После выполнения цикла округлите лучший <code>a</code> до 4 знаков: это ваш <code>a_1</code>.</li>
+        <li>Выведите <code>a_1</code> на экран.</li>
+      </ul>
+    </details>
+  </div></section>
+
+  <hr class="sep"/>
+
+  <section class="cell md"><div class="md">
+    <details>
+      <summary>🧩 Посмотреть правильный ответ</summary>
+      <pre><code>import math
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 1. Определяем функцию f(x).
+def f(x):
+    # f(x) = sqrt(x+1) + 0.5 * sin(3*x)
+    # sqrt(x+1) определена, если x >= -1.
+    # Нам нужна точка x = 1, это безопасно.
+    return math.sqrt(x + 1.0) + 0.5 * math.sin(3.0 * x)
+
+# 2. Целевое значение, в которое хотим попасть при x = 1.
+y_star = 5.0
+
+# 3. Заранее считаем f(1).
+x0 = 1.0
+f_x0 = f(x0)
+
+# 4. Перебор значений a.
+a_left  = -5.0
+a_right =  5.0
+step_a  =  0.001
+
+best_a   = None
+best_err = 10**9  # очень большое стартовое значение
+
+a = a_left
+while a <= a_right + 1e-12:
+    # g(1) = a * f(1) + a**2
+    g_x0 = a * f_x0 + a**2
+
+    # ошибка относительно целевого значения y_star
+    err = abs(g_x0 - y_star)
+
+    # если текущее лучше — обновляем
+    if err < best_err:
+        best_err = err
+        best_a   = a
+
+    a += step_a
+
+# 5. Формируем число a_1 и печатаем.
+a_1 = round(best_a, 4)
+
+print("ВАШЕ ЧИСЛО a_1 =", f"{a_1:.4f}")
+print("Минимальная ошибка =", f"{best_err:.6f}")
+
+# 6. Небольшой график g(x) = a_1 * f(x) + a_1**2 на [-2; 2].
+def f_np(xarr):
+    return np.sqrt(xarr + 1.0) + 0.5 * np.sin(3.0 * xarr)
+
+xs = np.linspace(-2, 2, 400)
+g_vals = a_1 * f_np(xs) + a_1**2
+
+plt.figure(figsize=(6, 2.4))
+plt.plot(xs, g_vals, lw=2)
+plt.axvline(x0, color="#999", lw=1, alpha=.6)  # отмечаем x = 1
+plt.title("g(x) при найденном a_1")
+plt.grid(True, alpha=.3)</code></pre>
+    </details>
+  </div></section>
+
+  <hr class="sep"/>
+
+
+<script>
+// ----------------------
+// Глобальные переменные
+// ----------------------
+let pyReadyPromise = null;
+const editors = {};
+
+// Это строка с накопленными ответами вида
+// a_1 = ...\n
+// a_2 = ...\n
+// и т.д. Мы будем дополнять её далее.
+window.answers_log = "";
+
+// ----------------------
+// Инициализация CodeMirror
+// ----------------------
+function initEditors(){
+  document.querySelectorAll('textarea.codearea').forEach(ta=>{
+    const ed = CodeMirror.fromTextArea(ta,{
+      mode:'python',
+      theme:'eclipse',
+      lineNumbers:true,
+      autoCloseBrackets:true,
+      lineWrapping:true,
+      viewportMargin:Infinity
+    });
+    const orig = ta.getAttribute('data-original') || "# ВАШ КОД НИЖЕ:\n";
+    ed.setValue(orig);
+    editors[ta.id]=ed;
+  });
+}
+
+// ----------------------
+// Кнопки действий
+// ----------------------
+function copyCode(id){
+  const ed = editors[id];
+  const t  = ed? ed.getValue() : "";
+  navigator.clipboard.writeText(t).then(()=>alert("Код скопирован"));
+}
+
+function resetCode(id){
+  const ta = document.getElementById(id);
+  const orig = ta.getAttribute('data-original') || "# ВАШ КОД НИЖЕ:\n";
+  if(editors[id]) editors[id].setValue(orig);
+}
+
+function clearOut(outId){
+  const outEl = document.getElementById(outId);
+  if(outEl){ outEl.innerHTML = ""; }
+}
+
+// скачать текущее содержимое окна вывода (результаты запуска)
+function saveOutputTxt(outId, filename='output.txt'){
+  const outEl = document.getElementById(outId);
+  const textContent = outEl ? outEl.innerText : "";
+  const blob = new Blob([textContent],{type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// скачать накопленные ответы (a_1, a_2, ...) из answers_log
+function saveAnswersTxt(){
+  const ed = editors['code1'];
+  const textContent = ed ? ed.getValue() : "";
+  const blob = new Blob([textContent],{type:'text/plain;charset=utf-8'});
+  const a   = document.createElement('a');
+  a.href    = URL.createObjectURL(blob);
+  a.download= 'Ваши_решения.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ----------------------
+// Подготовка Pyodide
+// ----------------------
+async function getPy(){
+  if(!pyReadyPromise){
+    pyReadyPromise = (async()=>{
+      const pyodide = await loadPyodide();
+      try{
+        await pyodide.loadPackage(['numpy','matplotlib']);
+      }catch(e){
+        console.warn('Не удалось подгрузить пакеты:', e);
+      }
+      return pyodide;
+    })();
+  }
+  return pyReadyPromise;
+}
+
+// Удаляем магии типа %... или !... перед запуском
+function preprocessForPyodide(code){
+  const lines = code.replaceAll('\r\n','\n').split('\n');
+  const outLines = [];
+  for(const ln of lines){
+    if(/^\s*[!%]/.test(ln)){
+      outLines.push('# [ignored cell magic] ' + ln);
+    }else if(/get_ipython\s*\(/.test(ln)){
+      outLines.push('# [ignored get_ipython] ' + ln);
+    }else{
+      outLines.push(ln);
+    }
+  }
+  return outLines.join('\n');
+}
+
+// ----------------------
+// Запуск Python-кода
+// ----------------------
+async function runPy(codeId, outId){
+  const outEl = document.getElementById(outId);
+  outEl.innerHTML = "<span style='opacity:.85'>⏳ Выполняется…</span>";
+
+  const pyodide = await getPy();
+
+  // Настраиваем stdout/stderr и matplotlib
+  const setup = `
+import sys, io, builtins
+buf_out, buf_err = io.StringIO(), io.StringIO()
+
+class _W:
+    def __init__(self,b): self.b=b
+    def write(self,s): self.b.write(s)
+    def flush(self): pass
+
+sys.stdout = _W(buf_out)
+sys.stderr = _W(buf_err)
+
+from js import prompt
+def _input(prompt_text=''):
+    r = prompt(str(prompt_text))
+    return '' if r is None else r
+
+import matplotlib
+matplotlib.use('module://matplotlib.backends.backend_agg')
+import matplotlib.pyplot as plt
+`;
+
+  try {
+    // прогоняем setup
+    await pyodide.runPythonAsync(setup);
+
+    // получаем код из редактора
+    const ed = editors[codeId];
+    const rawCode = ed? ed.getValue() : "";
+    const userCode = preprocessForPyodide(rawCode);
+
+    // запускаем пользовательский код
+    await pyodide.runPythonAsync(userCode);
+
+    // забираем stdout/stderr и картинки
+    const [stdoutText, stderrText, images] = await pyodide.runPythonAsync(`
+import base64, io
+from matplotlib import pyplot as plt
+import matplotlib
+
+outs = buf_out.getvalue()
+errs = buf_err.getvalue()
+imgs = []
+
+for f in list(matplotlib._pylab_helpers.Gcf.get_all_fig_managers()):
+    b = io.BytesIO()
+    f.canvas.figure.savefig(b, format='png', dpi=120, bbox_inches='tight')
+    imgs.append(base64.b64encode(b.getvalue()).decode())
+
+plt.close('all')
+outs, errs, imgs
+`);
+
+    // выводим результат
+    outEl.innerHTML = "";
+    if(stdoutText && stdoutText.trim()){
+      const pre = document.createElement('pre');
+      pre.textContent = stdoutText;
+      outEl.appendChild(pre);
+    }
+
+    if(images && images.length){
+      for(const b64 of images){
+        const img = document.createElement('img');
+        img.src = 'data:image/png;base64,'+b64;
+        outEl.appendChild(img);
+      }
+    }
+
+    if(stderrText && stderrText.trim()){
+      const preErr = document.createElement('pre');
+      preErr.style.color='#ff6b6b';
+      preErr.textContent = stderrText;
+      outEl.appendChild(preErr);
+    }
+
+  } catch(e){
+    outEl.innerHTML = "<pre style='color:#ff6b6b'></pre>";
+    outEl.querySelector('pre').textContent = (e && e.message) ? e.message : String(e);
+  }
+}
+
+// ----------------------
+// Инициализация редакторов после загрузки страницы
+// ----------------------
+document.addEventListener('DOMContentLoaded', initEditors);
+</script>
+
+</main>
+</body>
+</html>
