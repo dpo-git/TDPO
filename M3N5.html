@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>N5 — Область определения функции h(x) и число a_5</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- CodeMirror -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/eclipse.css">
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/python/python.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/closebrackets.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/comment/comment.js"></script>
+
+<!-- Pyodide -->
+<script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+
+<!-- MathJax -->
+<script>
+window.MathJax = { tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]}, svg: {fontCache: 'global'} };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<style>
+:root {
+  --bg:#fff;
+  --fg:#202124;
+  --muted:#5f6368;
+  --border:#e0e3e7;
+  --accent:#1a73e8;
+  --code-bg:#f8f9fa;
+  --out-bg:#0b1020;
+  --out-fg:#e5e7eb;
+}
+
+/* базовая раскладка */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--fg)}
+body{font-family:'Roboto',system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+main{max-width:1024px;margin:0 auto;padding:24px 16px 64px}
+header.page-title h1{margin:0 0 8px;font-size:28px;font-weight:700;line-height:1.25}
+
+.header-actions{margin-top:8px;}
+.header-actions .btn{
+  appearance:none;
+  padding:8px 14px;
+  font-size:14px;
+  border-radius:8px;
+  cursor:pointer;
+  line-height:1.2;
+  border:1px solid var(--accent);
+  background:var(--accent);
+  color:#fff;
+}
+
+/* ячейки и разделители */
+.cell{margin:16px 0}
+hr.sep{margin:24px 0;border:0;border-top:1px solid var(--border)}
+
+/* markdown-блоки */
+.cell.md .md{font-size:16px;line-height:1.65}
+.cell.md .md h1,.cell.md .md h2,.cell.md .md h3,.cell.md .md h4{margin:1.2em 0 .6em;font-weight:700}
+.cell.md .md h1{font-size:1.4em}
+.cell.md .md h2{font-size:1.3em}
+.cell.md .md h3{font-size:1.2em}
+.cell.md .md code{
+  background:#f1f3f4;
+  padding:2px 4px;
+  border-radius:4px;
+  font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace
+}
+.cell.md .md pre code{
+  background:var(--code-bg);
+  display:block;
+  padding:10px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  white-space:pre-wrap
+}
+.cell.md .md ul,.cell.md .md ol{margin:.25em 0 1em;padding-left:1.4em}
+.cell.md .md li{margin:.25em 0}
+.cell.md .md li>p{margin:0}
+
+.cell.md .md blockquote.md-hint{
+  margin:10px 0;
+  padding:10px 12px;
+  border-left:4px solid #8b5cf6;
+  background:#f5f3ff;
+  border-radius:8px;
+}
+.cell.md .md blockquote.md-hint p{margin:0}
+
+/* details (подсказка / решение) */
+.cell.md .md details{
+  margin:12px 0;
+  font-size:16px;
+  line-height:1.5;
+}
+.cell.md .md details summary{
+  cursor:pointer;
+  font-weight:600;
+  line-height:1.4;
+  margin-bottom:6px;
+}
+.cell.md .md details pre{
+  margin:0;
+  background:#f8f9fa;
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:10px;
+  overflow:auto;
+  font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace;
+  font-size:14px;
+  line-height:1.45;
+}
+
+/* code cell */
+.cell.code .editor-wrap{
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 1px 2px rgba(0,0,0,.05);
+  padding-bottom:0;
+  resize:vertical;
+  overflow:auto;
+}
+.cell-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:8px 12px;
+  background:#f8fbff;
+  border-bottom:1px solid var(--border);
+  flex-wrap:wrap;
+}
+.badge{color:var(--muted);font-size:12px;white-space:nowrap}
+.actions{display:flex;flex-wrap:wrap;gap:6px}
+.actions .btn{
+  appearance:none;
+  padding:6px 10px;
+  font-size:13px;
+  border-radius:8px;
+  cursor:pointer;
+  border:1px solid var(--border);
+  background:#fff;
+  color:#202124;
+  line-height:1.2;
+}
+.actions .btn.run{
+  border:1px solid var(--accent);
+  background:var(--accent);
+  color:#fff;
+}
+.actions .btn.clear,
+.actions .btn.download,
+.actions .btn.copy,
+.actions .btn.reset{
+  margin-left:6px;
+}
+
+/* редактор кода */
+.CodeMirror{
+  background:var(--code-bg);
+  border-bottom:1px solid var(--border);
+  font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace;
+  font-size:14px;
+  line-height:1.45;
+  height:auto;
+  max-height:none;
+}
+
+/* вывод */
+.output{
+  background:var(--out-bg);
+  color:var(--out-fg);
+  padding:12px;
+  min-height:24px;
+  font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace;
+  font-size:14px;
+  line-height:1.45;
+  border-bottom-left-radius:12px;
+  border-bottom-right-radius:12px;
+}
+.output pre{margin:0;white-space:pre-wrap}
+.output img{
+  display:block;
+  margin:8px 0;
+  max-width:100%;
+  height:auto;
+  border:1px solid #222;
+  border-radius:6px;
+  background:#fff;
+}
+
+footer.note{
+  color:var(--muted);
+  font-size:13px;
+  margin-top:40px
+}
+</style>
+</head>
+<body>
+<main>
+  <header class="page-title">
+    <h1>N5 — Область определения функции h(x) и число a_5</h1>
+    <div class="header-actions">
+      <button class="btn" onclick="saveAnswersTxt()">💾 Скачать решения</button>
+    </div>
+  </header>
+
+  <section class="cell md"><div class="md">
+    <h1># Что мы делаем в пятом задании?</h1>
+
+    <p>Сейчас у вас есть числа <code>a_1</code>, <code>a_2</code>, <code>a_3</code>, <code>a_4</code>.
+    В этом задании мы обсудим достаточно важную идею: не все выражения имеют смысл при некоторых \(x\).
+    Говоря более строго, мы обсудим ОДЗ или ООФ (область допустимых значений и область определения функции).</p>
+
+    <p>Рассмотрим функцию
+    \[
+    h(x) = \frac{\sqrt{x - a_2}}{\,x - a_1\,} \;+\; \ln\bigl(x + 1 + a_3\bigr).
+    \]
+    Важно понимать, что эта функция определена не при всех \(x\).
+    Для неё есть следующие ограничения:</p>
+
+    <ul>
+      <li>Подкоренное выражение должно быть неотрицательно:
+      \(\;x - a_2 \ge 0 \;\Rightarrow\; x \ge a_2.\)</li>
+      <li>Знаменатель не должен быть равен нулю:
+      \(\;x - a_1 \ne 0 \;\Rightarrow\; x \ne a_1.\)</li>
+      <li>Аргумент логарифма должен быть положительным:
+      \(\;x + 1 + a_3 &gt; 0 \;\Rightarrow\; x &gt; -1 - a_3.\)</li>
+    </ul>
+
+    <blockquote class="md-hint">
+      <p><strong>Идея простыми словами.</strong><br>
+      ОДЗ функции \(h(x)\) — это те значения \(x\), которые одновременно удовлетворяют
+      всем трём условиям:
+      \[
+      x \ge a_2,\quad
+      x &gt; -1 - a_3,\quad
+      x \ne a_1.
+      \]
+      То есть нам нужно <em>пересечение</em> этих условий.</p>
+    </blockquote>
+
+    <p>Мы не будем вычислять саму \(h(x)\).
+    Вместо этого мы построим некую «карту допустимости»: для каких \(x\) на числовой прямой функция вообще имеет смысл.</p>
+
+    <p>Дальше мы количественно оценим, как «много» допустимых значений на отрезке \([-5; 5]\).
+    Из этой оценки получим ваше новое число <code>a_5</code>.</p>
+  </div></section>
+
+  <hr class="sep"/>
+
+  <section class="cell md"><div class="md">
+    <h2># Задание №5</h2>
+
+    <p>Ваша программа должна:</p>
+    <ol>
+      <li>В начале записать свои числа <code>a_1</code>, <code>a_2</code>, <code>a_3</code>, <code>a_4</code>:
+      <br><code>a_1 = 4.4124  # замените на своё число из задания №1</code>
+      <br><code>a_2 = 2.1232  # замените на своё число из задания №2</code>
+      <br><code>a_3 = 3.3248  # замените на своё число из задания №3</code>
+      <br><code>a_4 = 1.9758  # замените на своё число из задания №4</code>
+      </li>
+
+      <li>Сформулировать условия ОДЗ функции
+      \[
+      h(x) = \frac{\sqrt{x - a_2}}{x - a_1} + \ln(x + 1 + a_3).
+      \]</li>
+
+      <li>Создать массив <code>xs</code> из примерно 2000 точек на отрезке [-5; 5]
+      (например, через <code>np.linspace(-5, 5, 2000)</code>).</li>
+
+      <li>Для каждого значения <code>x</code> проверить три условия:
+      <ul>
+        <li><code>x >= a_2</code> (подкоренное выражение неотрицательно),</li>
+        <li><code>x > -1 - a_3</code> (аргумент логарифма положителен),</li>
+        <li><code>x != a_1</code> (знаменатель не ноль).</li>
+      </ul>
+      Если все три условия выполняются, то такой <code>x</code> нам подходит.</li>
+
+      <li>Посчитать долю подходящих значений от общего количества точек.
+      Умножить эту долю на 100, чтобы получить проценты.</li>
+
+      <li>Округлить это процентное число до 4 знаков после запятой
+      и назвать результат <code>a_5</code>.</li>
+
+      <li>Напечатать две строки вида:
+      <pre><code>ВАШЕ ЧИСЛО a_5 = 48.1314
+Доля допустимых x (в %) = 48.131487</code></pre>
+      (числа — пример, у вас будут свои).</li>
+
+      <li>Построить простую визуализацию части ОДЗ на числовой прямой:
+      <ul>
+        <li>По оси x — точки из массива <code>xs</code>.</li>
+        <li>Если точка подходит, рисуем её на уровне 0.</li>
+        <li>Если точка не подходит, рисуем её на уровне -1.</li>
+      </ul>
+      Это и даст искомую «полоску».</li>
+    </ol>
+
+    <p>После запуска кода вы увидите значение числа <code>a_5</code> в чёрном окне вывода.
+    Обязательно сохраните это число: оно понадобится в дальнейшем.</p>
+
+    <p>Совет. После запуска кода можно нажать кнопку:</p>
+
+    <div class="actions" style="margin:8px 0;">
+      <button class="btn download" onclick="saveOutputTxt('out1','№5.txt')">
+        Скачать результат
+      </button>
+    </div>
+
+    <p>Эта кнопка сохранит окно вывода (ваше <code>a_5</code>) в .txt‑файл,
+    чтобы вы его не потеряли.</p>
+
+    <p><strong>⬇️ Напишите свой код в ячейке ниже.</strong></p>
+  </div></section>
+
+  <hr class="sep"/>
+
+  <section class="cell code">
+    <div class="editor-wrap">
+      <div class="cell-header">
+        <span class="badge">In&nbsp;[1]</span>
+        <div class="actions">
+          <button class="btn run" onclick="runPy('code1','out1')">▶ Запустить</button>
+          <button class="btn clear" onclick="clearOut('out1')">Очистить вывод</button>
+          <button class="btn download" onclick="saveOutputTxt('out1','№5.txt')">Скачать результат</button>
+          <button class="btn copy" onclick="copyCode('code1')">Скопировать код</button>
+          <button class="btn reset" onclick="resetCode('code1')">Сброс</button>
+        </div>
+      </div>
+
+      <textarea id="code1" class="codearea" data-original="# ВАШ КОД НИЖЕ:"></textarea>
+
+      <div id="out1" class="output"></div>
+    </div>
+  </section>
+
+  <hr class="sep"/>
+
+  <section class="cell md"><div class="md">
+    <details>
+      <summary>💡 Подсказка</summary>
+      <ul>
+        <li>Импортируйте модули:
+        <code>import math</code>,
+        <code>import numpy as np</code>,
+        <code>import matplotlib.pyplot as plt</code>.</li>
+
+        <li>В начале кода вручную задайте переменные
+        <code>a_1</code>, <code>a_2</code>, <code>a_3</code>, <code>a_4</code>
+        вашими личными числами из заданий №1, №2, №3 и №4.</li>
+
+        <li>Создайте массив
+        <code>xs = np.linspace(-5, 5, 2000)</code>.</li>
+
+        <li>Постройте массив из буллевых переменных, который проверяет условия:
+        <ul>
+          <li><code>x >= a_2</code></li>
+          <li><code>x > -1 - a_3</code></li>
+          <li><code>x != a_1</code></li>
+        </ul>
+        Например, векторно через numpy:
+        <code>allowed_mask = (xs &gt;= a_2) &amp; (xs &gt; (-1 - a_3)) &amp; (np.abs(xs - a_1) &gt; 1e-12)</code></li>
+
+        <li>Посчитайте долю разрешённых точек:
+        <code>fraction = np.sum(allowed_mask) / len(xs)</code><br>
+        Преобразуйте в проценты:
+        <code>pct = fraction * 100</code>.</li>
+
+        <li>Сформируйте
+        <code>a_5 = round(pct, 4)</code>
+        и выведите:
+        <code>print("ВАШЕ ЧИСЛО a_5 =", f"{a_5:.4f}")</code></li>
+
+        <li>Для визуализации сделайте массив <code>ys</code>, где
+        <code>0</code> будет использоваться для разрешённых точек и <code>-1</code> — для запрещённых,
+        а потом нарисуйте его
+        <code>plt.scatter(xs, ys, s=4)</code>.</li>
+
+        <li>Спрячьте деления по оси y: <code>plt.yticks([])</code>
+        и подпишите ось x.</li>
+      </ul>
+    </details>
+  </div></section>
+
+  <hr class="sep"/>
+
+  <section class="cell md"><div class="md">
+    <details>
+      <summary>🧩 Посмотреть правильный ответ</summary>
+      <pre><code>import math
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 1. Подставьте сюда свои числа a_1, a_2, a_3, a_4,
+#    которые вы получили ранее.
+#    ВАЖНО: замените значения справа на ваши!
+a_1 = 3.4032  # пример из задания №1
+a_2 = 0.1256  # пример из задания №2
+a_3 = 0.5784  # пример из задания №3
+a_4 = 4.6098  # пример из задания №4
+
+# 2. Мы рассматриваем функцию
+#    h(x) = sqrt(x - a_2)/(x - a_1) + ln(x + 1 + a_3)
+#    Условия:
+#    (1) x - a_2 >= 0          -> x >= a_2
+#    (2) x != a_1               -> знаменатель не 0
+#    (3) x + 1 + a_3 > 0        -> x > -1 - a_3
+#
+#    Эти условия должны выполняться одновременно.
+
+# 3. Строим массив точек на оси x в диапазоне [-5; 5].
+xs = np.linspace(-5, 5, 2000)
+
+# 4. Проверяем условия ОДЗ для каждой точки x из xs.
+cond1 = xs >= a_2                 # подкоренное выражение неотрицательно
+cond2 = xs > (-1 - a_3)           # логарифм определён (аргумент > 0)
+cond3 = np.abs(xs - a_1) > 1e-12  # знаменатель не равен нулю
+
+allowed_mask = cond1 & cond2 & cond3  # пересечение всех условий
+
+# 5. Считаем долю разрешённых x.
+fraction = np.sum(allowed_mask) / len(xs)  # число от 0 до 1
+pct = fraction * 100.0                     # переводим в проценты
+
+# 6. Формируем число a_5 и получаем результат.
+a_5 = round(pct, 4)
+
+print("ВАШЕ ЧИСЛО a_5 =", f"{a_5:.4f}")
+print("Доля допустимых x (в %) =", f"{pct:.6f}")
+
+# 7. Строим визуализацию ОДЗ на числовой прямой.
+#    Идея:
+#    - точки, где выражение имеет смысл (allowed_mask == True), рисуем на уровне y = 0
+#    - точки, где выражение НЕ имеет смысла, рисуем на уровне y = -1
+#
+ys_allowed = np.zeros_like(xs[allowed_mask])     # все по y = 0
+ys_forbidden = -1.0 * np.ones_like(xs[~allowed_mask])  # все по y = -1
+
+plt.figure(figsize=(6, 1.5))
+
+# Разрешённые x (ОДЗ выполняется) — один цвет
+plt.scatter(xs[allowed_mask], ys_allowed, s=4, color='tab:blue', label='допустимо')
+
+# Запрещённые x (ОДЗ не выполняется) — другой цвет
+plt.scatter(xs[~allowed_mask], ys_forbidden, s=4, color='tab:red', label='запрещено')
+
+plt.yticks([])  # по оси y подписи не нужны, там просто уровни 0 и -1
+plt.xlabel("ось x")
+plt.title("Часть ОДЗ: где h(x) определена")
+plt.grid(True, axis='x', alpha=.3)
+plt.legend(loc='upper right', fontsize=8)
+</code></pre>
+    </details>
+  </div></section>
+
+  <hr class="sep"/>
+
+<script>
+let pyReadyPromise = null;
+const editors = {};
+
+// инициализация CodeMirror
+function initEditors(){
+  document.querySelectorAll('textarea.codearea').forEach(ta=>{
+    const ed = CodeMirror.fromTextArea(ta,{
+      mode:'python',
+      theme:'eclipse',
+      lineNumbers:true,
+      autoCloseBrackets:true,
+      lineWrapping:true,
+      viewportMargin:Infinity
+    });
+    const orig = ta.getAttribute('data-original') || "# ВАШ КОД НИЖЕ:\n";
+    ed.setValue(orig);
+    editors[ta.id]=ed;
+  });
+}
+
+// скопировать код
+function copyCode(id){
+  const ed = editors[id];
+  const t  = ed ? ed.getValue() : "";
+  navigator.clipboard.writeText(t).then(()=>alert("Код скопирован"));
+}
+
+// сбросить код
+function resetCode(id){
+  const ta = document.getElementById(id);
+  const orig = ta.getAttribute('data-original') || "# ВАШ КОД НИЖЕ:\n";
+  if(editors[id]) editors[id].setValue(orig);
+}
+
+// очистить вывод
+function clearOut(outId){
+  const outEl = document.getElementById(outId);
+  if(outEl){ outEl.innerHTML = ""; }
+}
+
+// скачать вывод (результат выполнения, где печатается a_5)
+function saveOutputTxt(outId, filename='output.txt'){
+  const outEl = document.getElementById(outId);
+  const textContent = outEl ? outEl.innerText : "";
+  const blob = new Blob([textContent],{type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// скачать решения (то есть код пользователя)
+function saveAnswersTxt(){
+  const ed = editors['code1'];
+  const textContent = ed ? ed.getValue() : "";
+  const blob = new Blob([textContent],{type:'text/plain;charset=utf-8'});
+  const a   = document.createElement('a');
+  a.href    = URL.createObjectURL(blob);
+  a.download= 'Ваши_решения.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// подготовка Pyodide
+async function getPy(){
+  if(!pyReadyPromise){
+    pyReadyPromise = (async()=>{
+      const pyodide = await loadPyodide();
+      try{
+        await pyodide.loadPackage(['numpy','matplotlib']);
+      }catch(e){
+        console.warn('Не удалось подгрузить пакеты:', e);
+      }
+      return pyodide;
+    })();
+  }
+  return pyReadyPromise;
+}
+
+// зачистка магии jupyter (%..., !..., get_ipython(...))
+function preprocessForPyodide(code){
+  const lines = code.replaceAll('\r\n','\n').split('\n');
+  const outLines = [];
+  for(const ln of lines){
+    if(/^\s*[!%]/.test(ln)){
+      outLines.push('# [ignored cell magic] ' + ln);
+    }else if(/get_ipython\s*\(/.test(ln)){
+      outLines.push('# [ignored get_ipython] ' + ln);
+    }else{
+      outLines.push(ln);
+    }
+  }
+  return outLines.join('\n');
+}
+
+// запуск python-кода
+async function runPy(codeId, outId){
+  const outEl = document.getElementById(outId);
+  outEl.innerHTML = "<span style='opacity:.85'>⏳ Выполняется…</span>";
+
+  const pyodide = await getPy();
+
+  const setup = `
+import sys, io, builtins
+buf_out, buf_err = io.StringIO(), io.StringIO()
+
+class _W:
+    def __init__(self,b): self.b=b
+    def write(self,s): self.b.write(s)
+    def flush(self): pass
+
+sys.stdout = _W(buf_out)
+sys.stderr = _W(buf_err)
+
+from js import prompt
+def _input(prompt_text=''):
+    r = prompt(str(prompt_text))
+    return '' if r is None else r
+
+import matplotlib
+matplotlib.use('module://matplotlib.backends.backend_agg')
+import matplotlib.pyplot as plt
+`;
+
+  try {
+    await pyodide.runPythonAsync(setup);
+
+    const ed = editors[codeId];
+    const rawCode = ed ? ed.getValue() : "";
+    const userCode = preprocessForPyodide(rawCode);
+
+    await pyodide.runPythonAsync(userCode);
+
+    const [stdoutText, stderrText, images] = await pyodide.runPythonAsync(`
+import base64, io
+from matplotlib import pyplot as plt
+import matplotlib
+
+outs = buf_out.getvalue()
+errs = buf_err.getvalue()
+imgs = []
+
+for f in list(matplotlib._pylab_helpers.Gcf.get_all_fig_managers()):
+    b = io.BytesIO()
+    f.canvas.figure.savefig(b, format='png', dpi=120, bbox_inches='tight')
+    imgs.append(base64.b64encode(b.getvalue()).decode())
+
+plt.close('all')
+outs, errs, imgs
+`);
+
+    outEl.innerHTML = "";
+    if(stdoutText && stdoutText.trim()){
+      const pre = document.createElement('pre');
+      pre.textContent = stdoutText;
+      outEl.appendChild(pre);
+    }
+
+    if(images && images.length){
+      for(const b64 of images){
+        const img = document.createElement('img');
+        img.src = 'data:image/png;base64,'+b64;
+        outEl.appendChild(img);
+      }
+    }
+
+    if(stderrText && stderrText.trim()){
+      const preErr = document.createElement('pre');
+      preErr.style.color='#ff6b6b';
+      preErr.textContent = stderrText;
+      outEl.appendChild(preErr);
+    }
+
+  } catch(e){
+    outEl.innerHTML = "<pre style='color:#ff6b6b'></pre>";
+    outEl.querySelector('pre').textContent = (e && e.message) ? e.message : String(e);
+  }
+}
+
+// инициализируем редактор после загрузки страницы
+document.addEventListener('DOMContentLoaded', initEditors);
+</script>
+
+</main>
+</body>
+</html>
