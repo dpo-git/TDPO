@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Исследуем r(x) и получаем a_3</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- CodeMirror -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/eclipse.css">
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/python/python.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/closebrackets.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/comment/comment.js"></script>
+
+<!-- Pyodide -->
+<script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+
+<!-- MathJax -->
+<script>
+window.MathJax = { tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]}, svg: {fontCache: 'global'} };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<style>
+:root {
+  --bg:#fff;
+  --fg:#202124;
+  --muted:#5f6368;
+  --border:#e0e3e7;
+  --accent:#1a73e8;
+  --code-bg:#f8f9fa;
+  --out-bg:#0b1020;
+  --out-fg:#e5e7eb;
+}
+
+/* базовая раскладка */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--fg)}
+body{font-family:'Roboto',system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+main{max-width:1024px;margin:0 auto;padding:24px 16px 64px}
+header.page-title h1{margin:0 0 8px;font-size:28px;font-weight:700;line-height:1.25}
+
+.header-actions{margin-top:8px;}
+.header-actions .btn{
+  appearance:none;
+  padding:8px 14px;
+  font-size:14px;
+  border-radius:8px;
+  cursor:pointer;
+  line-height:1.2;
+  border:1px solid var(--accent);
+  background:var(--accent);
+  color:#fff;
+}
+
+/* ячейки и разделители */
+.cell{margin:16px 0}
+hr.sep{margin:24px 0;border:0;border-top:1px solid var(--border)}
+
+/* markdown-блоки */
+.cell.md .md{font-size:16px;line-height:1.65}
+.cell.md .md h1,.cell.md .md h2,.cell.md .md h3,.cell.md .md h4{margin:1.2em 0 .6em;font-weight:700}
+.cell.md .md h1{font-size:1.4em}
+.cell.md .md h2{font-size:1.3em}
+.cell.md .md h3{font-size:1.2em}
+.cell.md .md code{
+  background:#f1f3f4;
+  padding:2px 4px;
+  border-radius:4px;
+  font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace
+}
+.cell.md .md pre code{
+  background:var(--code-bg);
+  display:block;
+  padding:10px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  white-space:pre-wrap
+}
+.cell.md .md ul,.cell.md .md ol{margin:.25em 0 1em;padding-left:1.4em}
+.cell.md .md li{margin:.25em 0}
+.cell.md .md li>p{margin:0}
+
+.cell.md .md blockquote.md-hint{
+  margin:10px 0;
+  padding:10px 12px;
+  border-left:4px solid #8b5cf6;
+  background:#f5f3ff;
+  border-radius:8px;
+}
+.cell.md .md blockquote.md-hint p{margin:0}
+
+/* details (подсказка / решение) */
+.cell.md .md details{
+  margin:12px 0;
+  font-size:16px;
+  line-height:1.5;
+}
+.cell.md .md details summary{
+  cursor:pointer;
+  font-weight:600;
+  line-height:1.4;
+  margin-bottom:6px;
+}
+.cell.md .md details pre{
+  margin:0;
+  background:#f8f9fa;
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:10px;
+  overflow:auto;
+  font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace;
+  font-size:14px;
+  line-height:1.45;
+}
+
+/* code cell */
+.cell.code .editor-wrap{
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 1px 2px rgba(0,0,0,.05);
+  padding-bottom:0;
+  resize:vertical;
+  overflow:auto;
+}
+.cell-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:8px 12px;
+  background:#f8fbff;
+  border-bottom:1px solid var(--border);
+  flex-wrap:wrap;
+}
+.badge{color:var(--muted);font-size:12px;white-space:nowrap}
+.actions{display:flex;flex-wrap:wrap;gap:6px}
+.actions .btn{
+  appearance:none;
+  padding:6px 10px;
+  font-size:13px;
+  border-radius:8px;
+  cursor:pointer;
+  border:1px solid var(--border);
+  background:#fff;
+  color:#202124;
+  line-height:1.2;
+}
+.actions .btn.run{
+  border:1px solid var(--accent);
+  background:var(--accent);
+  color:#fff;
+}
+.actions .btn.clear,
+.actions .btn.download,
+.actions .btn.copy,
+.actions .btn.reset{
+  margin-left:6px;
+}
+
+/* редактор кода */
+.CodeMirror{
+  background:var(--code-bg);
+  border-bottom:1px solid var(--border);
+  font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace;
+  font-size:14px;
+  line-height:1.45;
+  height:auto;
+  max-height:none;
+}
+
+/* вывод */
+.output{
+  background:var(--out-bg);
+  color:var(--out-fg);
+  padding:12px;
+  min-height:24px;
+  font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace;
+  font-size:14px;
+  line-height:1.45;
+  border-bottom-left-radius:12px;
+  border-bottom-right-radius:12px;
+}
+.output pre{margin:0;white-space:pre-wrap}
+.output img{
+  display:block;
+  margin:8px 0;
+  max-width:100%;
+  height:auto;
+  border:1px solid #222;
+  border-radius:6px;
+  background:#fff;
+}
+
+footer.note{
+  color:var(--muted);
+  font-size:13px;
+  margin-top:40px
+}
+</style>
+</head>
+<body>
+<main>
+  <header class="page-title">
+    <h1>N3 — Исследуем r(x) и получаем a_3</h1>
+    <div class="header-actions">
+      <button class="btn" onclick="saveAnswersTxt()">💾 Скачать решения</button>
+    </div>
+  </header>
+
+  <section class="cell md"><div class="md">
+    <h1># Что мы делаем в третьем задании?</h1>
+
+    <p>В предыдущих заданиях (№1 и N2) вы нашли числа <code>a_1</code> и <code>a_2</code>.
+    В этом задании мы будем использовать их для построения функции колебаний \( r(x) \)
+    и измерения того, насколько сильно она «гуляет вверх‑вниз» на всём промежутке.
+    Полученное число мы назовём <code>a_3</code>. Это следующий шаг нашей «змейки».</p>
+
+    <p>Определим функцию
+    \( r(x) = a_1 \cdot \sin(x) + a_2 \cdot \cos(2x) \),
+    где \(a_1\) и \(a_2\) — это <strong>ваши</strong> числа из заданий №1 и N2.</p>
+
+    <p>Нас интересует не одна конкретная точка, а целый промежуток:
+    \( x \in [0; 2\pi] \) (то есть от 0 до примерно 6,28318).
+    Мы хотим понять, насколько сильно график \(r(x)\) колеблется вокруг своего среднего значения
+    на этом промежутке.</p>
+
+    <blockquote class="md-hint">
+      <p><strong>Идея простыми словами.</strong><br>
+      В N1 и N2 мы подбирали параметр, чтобы попасть в «нужные числа».
+      Теперь мы измеряем то, насколько «гуляет»сама функцию.</p>
+    </blockquote>
+
+    <p><strong>Как мы будем измерять «силу колебаний»?</strong></p>
+
+    <p>Поступим следующим образом:</p>
+    <ul>
+      <li>Берём достаточно много точек \(x\), равномерно расположенных на отрезке \([0; 2\pi]\)
+      (например, 400 точек).</li>
+      <li>Считаем значения \(r(x)\) во всех этих точках.</li>
+      <li>Считаем среднее значение функции
+      \(
+      m = \text{среднее из всех } r(x).
+      \)</li>
+      <li>Считаем среднеквадратичное отклонение, то есть «средний разброс» вокруг среднего:
+      \[
+      \text{std} = \sqrt{\frac{1}{N} \sum (r(x_i) - m)^2 }.
+      \]
+      </li>
+      <li>Округляем это значение до 4 знаков после запятой и называем результат
+      <code>a_3</code>.</li>
+    </ul>
+
+    <p>То есть итог задания №3 — получить число <code>a_3</code>,
+    которое описывает, насколько сильно ваша функция \(r(x)\)
+    колеблется на \([0; 2\pi]\).</p>
+  </div></section>
+
+  <hr class="sep"/>
+
+  <section class="cell md"><div class="md">
+    <h2># Задание №3</h2>
+
+    <p>Ваша программа должна:</p>
+    <ol>
+      <li>В начале записать ваши числа <code>a_1</code> и <code>a_2</code>:
+      <br><code>a_1 = 3.6225  # замените на своё число из задания №1</code>
+      <br><code>a_2 = 0.7638  # замените на своё число из задания №2</code>
+      </li>
+
+      <li>Определить функцию
+      \( r(x) = a_1 \cdot \sin(x) + a_2 \cdot \cos(2x) \).</li>
+
+      <li>Создать массив из примерно 400 точек от <code>0</code> до <code>2*math.pi</code>
+      и посчитать значения вашей функции \(r(x)\) во всех этих точках.</li>
+
+      <li>Посчитать среднее значение функции на этом промежутке и
+      среднеквадратичное отклонение (разброс относительно среднего).</li>
+
+      <li>Округлить этот разброс до 4 знака и сохранить получившееся число как <code>a_3</code>.</li>
+
+      <li>Напечатать две строки вида:
+      <pre><code>ВАШЕ ЧИСЛО a_3 = 4.5815
+Среднеквадратичное отклонение = 0.597562</code></pre>
+      (цифры — пример, у вас будут свои).</li>
+
+      <li>Построить график функции \(r(x)\) на \([0; 2\pi]\).
+      На том же графике провести горизонтальные линии:
+      <ul>
+        <li><code>y = m</code> — среднее значение,</li>
+        <li><code>y = m + std</code> и <code>y = m - std</code> — коридор колебаний.</li>
+      </ul>
+      Это визуализирует наши измерения.</li>
+    </ol>
+
+    <p>После запуска кода вы увидите своё число <code>a_3</code> в чёрном окне вывода.
+    Обязательно сохраните это число: оно понадобится в дальнейшем.</p>
+
+    <p>Совет. После запуска кода можно нажать кнопку:</p>
+
+    <div class="actions" style="margin:8px 0;">
+      <button class="btn download" onclick="saveOutputTxt('out1','№3.txt')">
+        Скачать результат
+      </button>
+    </div>
+
+    <p>Эта кнопка сохранит окно вывода (ваше <code>a_3</code>) в .txt‑файл,
+    чтобы вы его не потеряли.</p>
+
+    <p><strong>⬇️ Напишите свой код в ячейке ниже.</strong></p>
+  </div></section>
+
+  <hr class="sep"/>
+
+  <section class="cell code">
+    <div class="editor-wrap">
+      <div class="cell-header">
+        <span class="badge">In&nbsp;[1]</span>
+        <div class="actions">
+          <button class="btn run" onclick="runPy('code1','out1')">▶ Запустить</button>
+          <button class="btn clear" onclick="clearOut('out1')">Очистить вывод</button>
+          <button class="btn download" onclick="saveOutputTxt('out1','№3.txt')">Скачать результат</button>
+          <button class="btn copy" onclick="copyCode('code1')">Скопировать код</button>
+          <button class="btn reset" onclick="resetCode('code1')">Сброс</button>
+        </div>
+      </div>
+
+      <textarea id="code1" class="codearea" data-original="# ВАШ КОД НИЖЕ:"></textarea>
+
+      <div id="out1" class="output"></div>
+    </div>
+  </section>
+
+  <hr class="sep"/>
+
+  <section class="cell md"><div class="md">
+    <details>
+      <summary>💡 Подсказка</summary>
+      <ul>
+        <li>Сначала импортируйте <code>math</code>, <code>numpy as np</code>,
+        <code>matplotlib.pyplot as plt</code>.</li>
+
+        <li>Вручную задайте переменные <code>a_1</code> и <code>a_2</code> вашими числами
+        из заданий №1 и №2.</li>
+
+        <li>Определите функцию:
+        <br><code>r(x) = a_1 * sin(x) + a_2 * cos(2*x)</code>.
+        Можно сделать версию для одного числа (через <code>math.sin</code>)
+        и векторную версию для массива (через <code>np.sin</code>).</li>
+
+        <li>Создайте массив <code>xs = np.linspace(0, 2*math.pi, 400)</code>
+        и массив значений <code>rs</code> этой функции.</li>
+
+        <li>Посчитайте среднее <code>m</code>:
+        <br><code>m = float(np.mean(rs))</code>.</li>
+
+        <li>Посчитайте «разброс» вокруг среднего вручную:
+        <br>«Пробегитесь» по всем значениям <code>rs</code> в цикле,
+        аккуратно «накопите» сумму квадратов отклонений
+        и в конце возьмите квадратный корень.</li>
+
+        <li>Округлите результат до 4 знаков:
+        <br><code>a_3 = round(std_val, 4)</code>
+        и выведите:
+        <br><code>print("ВАШЕ ЧИСЛО a_3 =", f"{a_3:.4f}")</code></li>
+
+        <li>Постройте график, добавьте горизонтальные линии
+        <code>y = m</code> и <code>y = m ± std_val</code>.</li>
+      </ul>
+    </details>
+  </div></section>
+
+  <hr class="sep"/>
+
+  <section class="cell md"><div class="md">
+    <details>
+      <summary>🧩 Посмотреть правильный ответ</summary>
+      <pre><code>import math
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 1. Подставьте сюда свои числа a_1 и a_2
+#    (то, что вы получили ранее).
+#    ВАЖНО: замените значения справа на ваши!
+a_1 = 4.2331  # пример из задания №1
+a_2 = 1.2432  # пример из задания №2
+
+# 2. Определяем функцию r(x) = a_1*sin(x) + a_2*cos(2*x).
+#    Сначала версия для одного x (скаляр):
+def r_scalar(x):
+    return a_1*math.sin(x) + a_2*math.cos(2*x)
+
+#    Теперь векторная версия для массива xs (numpy):
+def r_np(xarr):
+    return a_1*np.sin(xarr) + a_2*np.cos(2*xarr)
+
+# 3. Делаем сетку точек на [0; 2*pi]
+xs = np.linspace(0, 2*math.pi, 400)
+
+# 4. Считаем значения функции r(x) для всех точек xs
+rs = r_np(xs)
+
+# 5. Среднее значение функции на этом промежутке
+m = float(np.mean(rs))
+
+# 6. Оцениваем "средний разброс" вокруг среднего.
+#    Это по своей сути и есть среднеквадратичное отклонение.
+sq = 0.0
+for v in rs:
+    sq += (v - m)**2
+std_val = math.sqrt(sq / len(rs))
+
+# 7. Округляем разброс до 4 знаков после запятой — это и есть a_3.
+a_3 = round(std_val, 4)
+
+print("ВАШЕ ЧИСЛО a_3 =", f"{a_3:.4f}")
+print("Среднеквадратичное отклонение =", f"{std_val:.6f}")
+
+# 8. Рисуем график r(x) и горизонтальные линии m, m ± std_val.
+plt.figure(figsize=(6, 2.4))
+plt.plot(xs, rs, lw=2)
+
+# линия среднего
+plt.axhline(m,         color="#999", lw=1, alpha=.6)
+
+# границы "коридора колебаний"
+plt.axhline(m+std_val, color="#999", lw=1, alpha=.3)
+plt.axhline(m-std_val, color="#999", lw=1, alpha=.3)
+
+plt.title("r(x) при ваших a_1 и a_2")
+plt.grid(True, alpha=.3)</code></pre>
+    </details>
+  </div></section>
+
+  <hr class="sep"/>
+
+<script>
+let pyReadyPromise = null;
+const editors = {};
+
+// инициализация CodeMirror
+function initEditors(){
+  document.querySelectorAll('textarea.codearea').forEach(ta=>{
+    const ed = CodeMirror.fromTextArea(ta,{
+      mode:'python',
+      theme:'eclipse',
+      lineNumbers:true,
+      autoCloseBrackets:true,
+      lineWrapping:true,
+      viewportMargin:Infinity
+    });
+    const orig = ta.getAttribute('data-original') || "# ВАШ КОД НИЖЕ:\n";
+    ed.setValue(orig);
+    editors[ta.id]=ed;
+  });
+}
+
+// скопировать код
+function copyCode(id){
+  const ed = editors[id];
+  const t  = ed ? ed.getValue() : "";
+  navigator.clipboard.writeText(t).then(()=>alert("Код скопирован"));
+}
+
+// сбросить код
+function resetCode(id){
+  const ta = document.getElementById(id);
+  const orig = ta.getAttribute('data-original') || "# ВАШ КОД НИЖЕ:\n";
+  if(editors[id]) editors[id].setValue(orig);
+}
+
+// очистить вывод
+function clearOut(outId){
+  const outEl = document.getElementById(outId);
+  if(outEl){ outEl.innerHTML = ""; }
+}
+
+// скачать вывод (результат выполнения: a_3 и т.д.)
+function saveOutputTxt(outId, filename='output.txt'){
+  const outEl = document.getElementById(outId);
+  const textContent = outEl ? outEl.innerText : "";
+  const blob = new Blob([textContent],{type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// скачать решения (то есть код пользователя)
+function saveAnswersTxt(){
+  const ed = editors['code1'];
+  const textContent = ed ? ed.getValue() : "";
+  const blob = new Blob([textContent],{type:'text/plain;charset=utf-8'});
+  const a   = document.createElement('a');
+  a.href    = URL.createObjectURL(blob);
+  a.download= 'Ваши_решения.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// подготовка Pyodide
+async function getPy(){
+  if(!pyReadyPromise){
+    pyReadyPromise = (async()=>{
+      const pyodide = await loadPyodide();
+      try{
+        await pyodide.loadPackage(['numpy','matplotlib']);
+      }catch(e){
+        console.warn('Не удалось подгрузить пакеты:', e);
+      }
+      return pyodide;
+    })();
+  }
+  return pyReadyPromise;
+}
+
+// зачистка магии jupyter (%..., !..., get_ipython(...))
+function preprocessForPyodide(code){
+  const lines = code.replaceAll('\r\n','\n').split('\n');
+  const outLines = [];
+  for(const ln of lines){
+    if(/^\s*[!%]/.test(ln)){
+      outLines.push('# [ignored cell magic] ' + ln);
+    }else if(/get_ipython\s*\(/.test(ln)){
+      outLines.push('# [ignored get_ipython] ' + ln);
+    }else{
+      outLines.push(ln);
+    }
+  }
+  return outLines.join('\n');
+}
+
+// запуск python-кода
+async function runPy(codeId, outId){
+  const outEl = document.getElementById(outId);
+  outEl.innerHTML = "<span style='opacity:.85'>⏳ Выполняется…</span>";
+
+  const pyodide = await getPy();
+
+  const setup = `
+import sys, io, builtins
+buf_out, buf_err = io.StringIO(), io.StringIO()
+
+class _W:
+    def __init__(self,b): self.b=b
+    def write(self,s): self.b.write(s)
+    def flush(self): pass
+
+sys.stdout = _W(buf_out)
+sys.stderr = _W(buf_err)
+
+from js import prompt
+def _input(prompt_text=''):
+    r = prompt(str(prompt_text))
+    return '' if r is None else r
+
+import matplotlib
+matplotlib.use('module://matplotlib.backends.backend_agg')
+import matplotlib.pyplot as plt
+`;
+
+  try {
+    await pyodide.runPythonAsync(setup);
+
+    const ed = editors[codeId];
+    const rawCode = ed ? ed.getValue() : "";
+    const userCode = preprocessForPyodide(rawCode);
+
+    await pyodide.runPythonAsync(userCode);
+
+    const [stdoutText, stderrText, images] = await pyodide.runPythonAsync(`
+import base64, io
+from matplotlib import pyplot as plt
+import matplotlib
+
+outs = buf_out.getvalue()
+errs = buf_err.getvalue()
+imgs = []
+
+for f in list(matplotlib._pylab_helpers.Gcf.get_all_fig_managers()):
+    b = io.BytesIO()
+    f.canvas.figure.savefig(b, format='png', dpi=120, bbox_inches='tight')
+    imgs.append(base64.b64encode(b.getvalue()).decode())
+
+plt.close('all')
+outs, errs, imgs
+`);
+
+    outEl.innerHTML = "";
+    if(stdoutText && stdoutText.trim()){
+      const pre = document.createElement('pre');
+      pre.textContent = stdoutText;
+      outEl.appendChild(pre);
+    }
+
+    if(images && images.length){
+      for(const b64 of images){
+        const img = document.createElement('img');
+        img.src = 'data:image/png;base64,'+b64;
+        outEl.appendChild(img);
+      }
+    }
+
+    if(stderrText && stderrText.trim()){
+      const preErr = document.createElement('pre');
+      preErr.style.color='#ff6b6b';
+      preErr.textContent = stderrText;
+      outEl.appendChild(preErr);
+    }
+
+  } catch(e){
+    outEl.innerHTML = "<pre style='color:#ff6b6b'></pre>";
+    outEl.querySelector('pre').textContent = (e && e.message) ? e.message : String(e);
+  }
+}
+
+// инициализируем редактор после загрузки страницы
+document.addEventListener('DOMContentLoaded', initEditors);
+</script>
+
+</main>
+</body>
+</html>
