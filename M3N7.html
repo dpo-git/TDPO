@@ -261,7 +261,7 @@ footer.note{
         <div class="actions">
           <button class="btn run" onclick="runFinal('out1')">▶ Построить сердечко</button>
           <button class="btn clear" onclick="clearOut('out1')">Очистить вывод</button>
-          <button class="btn download" onclick="saveOutputTxt('out1','Финал.txt')">Скачать результат</button>
+          <button class="btn download" onclick="saveHeartPng()">Скачать результат</button>
         </div>
       </div>
 
@@ -307,6 +307,7 @@ footer.note{
 
 <script>
 let pyReadyPromise = null;
+let lastHeartDataUrl = null;
 
 // подготовка Pyodide
 async function getPy(){
@@ -331,16 +332,17 @@ function clearOut(outId){
 }
 
 // скачать вывод (итог и сердечко)
-function saveOutputTxt(outId, filename='Финал.txt'){
-  const outEl = document.getElementById(outId);
-  const textContent = outEl ? outEl.innerText : "";
-  const blob = new Blob([textContent],{type:'text/plain;charset=utf-8'});
+function saveHeartPng(filename='Ваше_сердечко.png'){
+  if (!lastHeartDataUrl) {
+    alert("Сначала постройте сердечко 🙂");
+    return;
+  }
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  a.href = lastHeartDataUrl;   // data:image/png;base64,...
   a.download = filename;
   a.click();
-  URL.revokeObjectURL(a.href);
 }
+
 
 // скачать введённые числа
 function saveAnswersTxt(){
@@ -531,12 +533,23 @@ outs, errs, imgs
     }
 
     if(images && images.length){
-      for(const b64 of images){
-        const img = document.createElement('img');
-        img.src = 'data:image/png;base64,'+b64;
-        outEl.appendChild(img);
-      }
+      for (const b64 of images){
+      const dataUrl = 'data:image/png;base64,' + b64;
+
+      // запоминаем последнее сердечко,
+      // чтобы потом можно было скачать
+      lastHeartDataUrl = dataUrl;
+
+      const img = document.createElement('img');
+      img.src = dataUrl;
+      outEl.appendChild(img);
+
+      // если у тебя всегда только одна картинка,
+      // можно даже break после первой
+      break;
     }
+  }
+
 
     if(stderrText && stderrText.trim()){
       const preErr = document.createElement('pre');
