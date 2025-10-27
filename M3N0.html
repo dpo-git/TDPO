@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Вводная страница 3-го модуля</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- CodeMirror -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/eclipse.css">
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/python/python.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/closebrackets.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/comment/comment.js"></script>
+
+<!-- Pyodide -->
+<script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+
+<!-- MathJax -->
+<script>
+window.MathJax = { tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]}, svg: {fontCache: 'global'} };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<style>
+:root {
+  --bg:#fff;
+  --fg:#202124;
+  --muted:#5f6368;
+  --border:#e0e3e7;
+  --accent:#1a73e8;
+  --code-bg:#f8f9fa;
+  --out-bg:#0b1020;
+  --out-fg:#e5e7eb;
+}
+
+/* базовая раскладка */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--fg)}
+body{font-family:'Roboto',system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+main{max-width:1024px;margin:0 auto;padding:24px 16px 64px}
+header.page-title h1{margin:0 0 8px;font-size:28px;font-weight:700;line-height:1.25}
+
+.header-actions{margin-top:8px;}
+.header-actions .btn{
+  appearance:none;padding:8px 14px;font-size:14px;border-radius:8px;cursor:pointer;line-height:1.2;
+  border:1px solid var(--accent);background:var(--accent);color:#fff;
+}
+
+/* ячейки и разделители */
+.cell{margin:16px 0}
+hr.sep{margin:24px 0;border:0;border-top:1px solid var(--border)}
+
+/* markdown-блоки */
+.cell.md .md{font-size:16px;line-height:1.65}
+.cell.md .md h1,.cell.md .md h2{margin:1.2em 0 .6em;font-weight:700}
+.cell.md .md h1{font-size:1.4em}
+.cell.md .md h2{font-size:1.3em}
+.cell.md .md code{background:#f1f3f4;padding:2px 4px;border-radius:4px;font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace}
+.cell.md .md ul,.cell.md .md ol{margin:.25em 0 1em;padding-left:1.4em}
+.cell.md .md li{margin:.25em 0}
+.cell.md .md blockquote.md-hint{margin:10px 0;padding:10px 12px;border-left:4px solid #0ea5e9;background:#f0f9ff;border-radius:8px}
+
+/* code cell */
+.cell.code .editor-wrap{
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 1px 2px rgba(0,0,0,.05);
+  padding-bottom:0;
+  resize:vertical;
+  overflow:auto;
+}
+.cell-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;background:#f8fbff;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.badge{color:var(--muted);font-size:12px;white-space:nowrap}
+.actions{display:flex;flex-wrap:wrap;gap:6px}
+.actions .btn{
+  appearance:none;padding:6px 10px;font-size:13px;border-radius:8px;cursor:pointer;border:1px solid var(--border);
+  background:#fff;color:#202124;line-height:1.2;
+}
+.actions .btn.run{border:1px solid var(--accent);background:var(--accent);color:#fff}
+.actions .btn.clear,
+.actions .btn.download,
+.actions .btn.copy,
+.actions .btn.reset{
+  margin-left:6px;
+}
+
+/* редактор кода */
+textarea.codearea{display:none;}
+.CodeMirror{
+  background:var(--code-bg);
+  border-bottom:1px solid var(--border);
+  font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace;
+  font-size:14px;
+  line-height:1.45;
+  height:auto;
+  max-height:none;
+  /* без внутреннего скролла */
+}
+
+/* вывод */
+.output{background:var(--out-bg);color:var(--out-fg);padding:12px;min-height:24px;
+  font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace;font-size:14px;line-height:1.45;
+  border-bottom-left-radius:12px;border-bottom-right-radius:12px}
+.output pre{margin:0;white-space:pre-wrap}
+.output img{display:block;margin:6px 0;max-width:100%;height:auto;border:1px solid #222;border-radius:6px;background:#fff}
+</style>
+</head>
+<body>
+<main>
+  <header class="page-title">
+    <h1>N0 — Вводная страница 3-го модуля</h1>
+    <div class="header-actions">
+      <button class="btn" onclick="saveAllCodes()">💾 Скачать решения</button>
+    </div>
+  </header>
+
+  <section class="cell md"><div class="md">
+    <h1># Зачем эта страница</h1>
+    <p>Это вводный ноутбук к модулю «Функции и функциональный взгляд на математику».
+    Наша цель — освоить приёмы, которые понадобятся в следующих заданиях.</p>
+    <ul>
+      <li>Где нажимать <strong>▶ Запустить</strong> и как работать с чёрным окном </strong>вывода</strong>.</li>
+      <li>Как округлять результаты до 4 знаков.</li>
+      <li>Как работает перебор параметра и поиск «лучшего» значения.</li>
+      <li>Что такое функция <code>def ... return ...</code>.</li>
+      <li>Чем отличаются <code>math.sin</code> и <code>np.sin</code>.</li>
+      <li>Как мы работаем с ОДЗ через маски и как рисуем кусочно-заданные функции.</li>
+    </ul>
+    <blockquote class="md-hint">
+      <p><strong>Важно.</strong> В десятичных дробях в качестве разделителя используйте точку (например, <code>1.2345</code>), а не запятую! Вверху есть кнопка
+      «💾 Скачать решения» — она сохраняет ваш код из всех ячеек в один txt‑файл.</p>
+    </blockquote>
+  </div></section>
+
+  <section class="cell md"><div class="md">
+    <h1># «Змейка» из заданий: как это работает</h1>
+    <p>В основной части модуля вы получите числа <code>a_1, a_2, …, a_6</code> (по одному из каждой задачи №1…№6).
+    Каждое следующее задание <strong>использует</strong> результат предыдущего — так и строится наша «змейка». В последнем задании вы введёте свои
+    <code>a_1…a_6</code>, и программа нарисует итоговую фигуру на плоскости: чем точнее были ваши ответы, тем «красивее» будет рисунок.</p>
+    <ul>
+      <li><strong>№1.</strong> Подбор параметра: перебор, точность → получаем <code>a_1</code>.</li>
+      <li><strong>№2.</strong> Используем 1-ый, ищем 2-ой → получаем <code>a_2</code>.</li>
+      <li><strong>№3.</strong> Изучаем колебания функции, получаем 3-й → <code>a_3</code>.</li>
+      <li><strong>№4.</strong> Преобразование графика и поиск максимума → <code>a_4</code>.</li>
+      <li><strong>№5.</strong> Область определения функции и доля допустимых значений → <code>a_5</code>.</li>
+      <li><strong>№6.</strong> Кусочно-заданная функция и среднее на отрезке → <code>a_6</code>.</li>
+      <li><strong>№7.</strong> Финал.</li>
+    </ul>
+    <p>Сохраняйте результаты: у каждой задачи есть кнопка «Скачать результат» (чёрное окно). А вверху страницы — «💾 Скачать решения»
+    (сохраняет ваши заготовки кода, если вы что-то редактировали).</p>
+  </div></section>
+
+  <hr class="sep"/>
+
+  <!-- Блок 1 -->
+  <section class="cell md"><div class="md">
+    <h1># Переменные и округление до 4 знаков</h1>
+    <p>Мы очень часто будем округлять финальное число до 4 знаков: <code>round(число, 4)</code>. Ниже — базовый пример.</p>
+  </div></section>
+
+  <section class="cell code">
+    <div class="editor-wrap">
+      <div class="cell-header">
+        <span class="badge">In&nbsp;[1]</span>
+        <div class="actions">
+          <button class="btn run" onclick="runPy('code1','out1')">▶ Запустить</button>
+          <button class="btn clear" onclick="clearOut('out1')">Очистить вывод</button>
+          <button class="btn download" onclick="saveOutputTxt('out1','N0_Блок1_вывод.txt')">Скачать результат</button>
+          <button class="btn copy" onclick="copyCode('code1')">Скопировать код</button>
+          <button class="btn reset" onclick="resetCode('code1')">Сброс</button>
+        </div>
+      </div>
+
+      <textarea id="code1" class="codearea" data-original="# Пример: работа с числом и округление
+x = 2.3456789
+y = round(x, 4)  # округляем до 4 знаков
+
+print(&quot;x =&quot;, x)
+print(&quot;y =&quot;, y)
+
+# abs(...) — модуль числа; пригодится для «ошибки попадания»
+diff = abs(x - y)
+print(&quot;Разница между x и округлённым y =&quot;, diff)
+"></textarea>
+
+      <div id="out1" class="output"></div>
+    </div>
+  </section>
+
+  <hr class="sep"/>
+
+  <!-- Блок 2 -->
+  <section class="cell md"><div class="md">
+    <h1># Перебор параметра и поиск лучшего значения</h1>
+    <p>Шаблон «перебрать → посчитать ошибку → запомнить лучший вариант» используется в №1.</p>
+  </div></section>
+
+  <section class="cell code">
+    <div class="editor-wrap">
+      <div class="cell-header">
+        <span class="badge">In&nbsp;[2]</span>
+        <div class="actions">
+          <button class="btn run" onclick="runPy('code2','out2')">▶ Запустить</button>
+          <button class="btn clear" onclick="clearOut('out2')">Очистить вывод</button>
+          <button class="btn download" onclick="saveOutputTxt('out2','N0_Блок2_вывод.txt')">Скачать результат</button>
+          <button class="btn copy" onclick="copyCode('code2')">Скопировать код</button>
+          <button class="btn reset" onclick="resetCode('code2')">Сброс</button>
+        </div>
+      </div>
+
+      <textarea id="code2" class="codearea" data-original="# Ищем такое a, чтобы значение было как можно ближе к target
+target = 5.0
+best_a = None
+best_err = 10**9
+
+a = -5.0
+while a &lt;= 5.0:
+    val = a**2 + 3*a           # пример функции
+    err = abs(val - target)    # «насколько близко к 5.0»
+
+    if err &lt; best_err:
+        best_err = err
+        best_a = a
+
+    a += 0.001
+
+print(&quot;Лучшее a =&quot;, round(best_a, 4))
+print(&quot;Минимальная ошибка =&quot;, best_err)
+"></textarea>
+
+      <div id="out2" class="output"></div>
+    </div>
+  </section>
+
+  <hr class="sep"/>
+
+  <!-- Блок 3 -->
+  <section class="cell md"><div class="md">
+    <h1># Что такое <code>def</code> и <code>return</code> (функция)</h1>
+    <p><code>def</code> — это объявление функции (шаблона вычислений). <code>return</code> — что функция возвращает как результат.</p>
+    <p>Ниже мы оформим ту же идею «ошибки попадания» уже через отдельные функции.</p>
+  </div></section>
+
+  <section class="cell code">
+    <div class="editor-wrap">
+      <div class="cell-header">
+        <span class="badge">In&nbsp;[3]</span>
+        <div class="actions">
+          <button class="btn run" onclick="runPy('code3','out3')">▶ Запустить</button>
+          <button class="btn clear" onclick="clearOut('out3')">Очистить вывод</button>
+          <button class="btn download" onclick="saveOutputTxt('out3','N0_Блок3_вывод.txt')">Скачать результат</button>
+          <button class="btn copy" onclick="copyCode('code3')">Скопировать код</button>
+          <button class="btn reset" onclick="resetCode('code3')">Сброс</button>
+        </div>
+      </div>
+
+      <textarea id="code3" class="codearea" data-original="# Оформляем вычисления через функции
+
+def expr(a):
+    &quot;&quot;&quot;
+    Функция expr возвращает значение учебной формулы при данном a.
+    Важно: слово return — «вернуть результат из функции».
+    &quot;&quot;&quot;
+    return a**2 + 3*a
+
+def loss(a, target=5.0):
+    &quot;&quot;&quot;
+    Насколько значение expr(a) далеко от target — это и есть «ошибка попадания».
+    &quot;&quot;&quot;
+    return abs(expr(a) - target)
+
+best_a = None
+best_err = 10**9
+
+a = -5.0
+while a &lt;= 5.0:
+    err = loss(a, target=5.0)
+    if err &lt; best_err:
+        best_err = err
+        best_a = a
+    a += 0.001
+
+print(&quot;Лучшее a =&quot;, round(best_a, 4))
+print(&quot;Минимальная ошибка =&quot;, best_err)
+"></textarea>
+
+      <div id="out3" class="output"></div>
+    </div>
+  </section>
+
+  <hr class="sep"/>
+
+  <!-- Блок 4 -->
+  <section class="cell md"><div class="md">
+    <h1># <code>math.sin</code> и <code>np.sin</code>: в чём разница</h1>
+    <ul>
+      <li><code>math.sin</code> — для одного числа (скаляр).</li>
+      <li><code>np.sin</code> — для массива чисел сразу (векторы/таблицы из NumPy).</li>
+    </ul>
+    <p>Ниже — пример: одно значение считаем обоими способами, а для массива используем только <code>np.sin</code>.</p>
+  </div></section>
+
+  <section class="cell code">
+    <div class="editor-wrap">
+      <div class="cell-header">
+        <span class="badge">In&nbsp;[4]</span>
+        <div class="actions">
+          <button class="btn run" onclick="runPy('code4','out4')">▶ Запустить</button>
+          <button class="btn clear" onclick="clearOut('out4')">Очистить вывод</button>
+          <button class="btn download" onclick="saveOutputTxt('out4','N0_Блок4_вывод.txt')">Скачать результат</button>
+          <button class="btn copy" onclick="copyCode('code4')">Скопировать код</button>
+          <button class="btn reset" onclick="resetCode('code4')">Сброс</button>
+        </div>
+      </div>
+
+      <textarea id="code4" class="codearea" data-original="import math
+import numpy as np
+
+# СКАЛЯР: одно число
+x = 1.0
+print(&quot;math.sin(1.0) =&quot;, math.sin(x))
+print(&quot;np.sin(1.0)   =&quot;, np.sin(x))
+
+# МАССИВ: много чисел сразу
+xs = np.linspace(0, 2*math.pi, 5)
+print(&quot;xs =&quot;, xs)
+
+# print(math.sin(xs))   # так НЕЛЬЗЯ: math.sin ждёт одно число
+print(&quot;np.sin(xs) =&quot;, np.sin(xs))  # так можно: NumPy работает с массивами
+"></textarea>
+
+      <div id="out4" class="output"></div>
+    </div>
+  </section>
+
+  <hr class="sep"/>
+
+  <!-- Блок 5 -->
+  <section class="cell md"><div class="md">
+    <h1># ОДЗ через логические маски и визуализацию</h1>
+    <p>Проверяем условия ОДЗ на сетке точек и рисуем «разрешено/запрещено» на числовой прямой. Это пригодится в №5.</p>
+  </div></section>
+
+  <section class="cell code">
+    <div class="editor-wrap">
+      <div class="cell-header">
+        <span class="badge">In&nbsp;[5]</span>
+        <div class="actions">
+          <button class="btn run" onclick="runPy('code5','out5')">▶ Запустить</button>
+          <button class="btn clear" onclick="clearOut('out5')">Очистить вывод</button>
+          <button class="btn download" onclick="saveOutputTxt('out5','N0_Блок5_вывод.txt')">Скачать результат</button>
+          <button class="btn copy" onclick="copyCode('code5')">Скопировать код</button>
+          <button class="btn reset" onclick="resetCode('code5')">Сброс</button>
+        </div>
+      </div>
+
+      <textarea id="code5" class="codearea" data-original="import numpy as np
+import matplotlib.pyplot as plt
+
+# Пример: h(x) = sqrt(x - 1)/(x - 2)
+xs = np.linspace(-5, 5, 400)
+
+cond1 = xs &gt;= 1               # под корнем неотрицательно
+cond2 = np.abs(xs - 2) &gt; 1e-9 # знаменатель не 0
+allowed = cond1 &amp; cond2
+
+ys = np.where(allowed, 0.0, -1.0)   # разрешено -&gt; 0, запрещено -&gt; -1
+
+plt.figure(figsize=(6,1.6))
+plt.scatter(xs[allowed],   ys[allowed],   s=6, c=&quot;#34d399&quot;, label=&quot;разрешено&quot;)  # зелёные
+plt.scatter(xs[~allowed],  ys[~allowed],  s=6, c=&quot;#f87171&quot;, label=&quot;запрещено&quot;) # красные
+plt.yticks([])
+plt.xlabel(&quot;ось x&quot;)
+plt.title(&quot;ОДЗ: где функция определена&quot;)
+plt.legend(loc=&quot;upper right&quot;, fontsize=8)
+plt.grid(True, axis=&#x27;x&#x27;, alpha=.3)
+"></textarea>
+
+      <div id="out5" class="output"></div>
+    </div>
+  </section>
+
+  <hr class="sep"/>
+
+  <!-- Блок 6 -->
+  <section class="cell md"><div class="md">
+    <h1># Кусочно-заданная функция и выколотые точки</h1>
+    <p>Рисуем каждый кусок отдельно и ставим закрашенные/пустые кружки в точках стыка. Это пригодится в №6.</p>
+  </div></section>
+
+  <section class="cell code">
+    <div class="editor-wrap">
+      <div class="cell-header">
+        <span class="badge">In&nbsp;[6]</span>
+        <div class="actions">
+          <button class="btn run" onclick="runPy('code6','out6')">▶ Запустить</button>
+          <button class="btn clear" onclick="clearOut('out6')">Очистить вывод</button>
+          <button class="btn download" onclick="saveOutputTxt('out6','N0_Блок6_вывод.txt')">Скачать результат</button>
+          <button class="btn copy" onclick="copyCode('code6')">Скопировать код</button>
+          <button class="btn reset" onclick="resetCode('code6')">Сброс</button>
+        </div>
+      </div>
+
+      <textarea id="code6" class="codearea" data-original="import numpy as np
+import matplotlib.pyplot as plt
+
+def t_scalar(x):
+    if x &lt; -1:
+        return -2*x + 1        # кусок 1
+    elif x &lt;= 1:
+        return x**2 - 3        # кусок 2 (включая -1 и 1)
+    else:
+        return 0.5             # кусок 3
+
+def t_np(xarr):
+    vals = []
+    for x in xarr:
+        vals.append(t_scalar(x))
+    return np.array(vals)
+
+xs = np.linspace(-3, 3, 400)
+ts = t_np(xs)
+
+mask_left   = xs &lt; -1
+mask_mid    = (xs &gt;= -1) &amp; (xs &lt;= 1)
+mask_right  = xs &gt; 1
+
+plt.figure(figsize=(6,2.4))
+plt.plot(xs[mask_left], ts[mask_left], lw=2)
+plt.plot(xs[mask_mid],  ts[mask_mid],  lw=2)
+plt.plot(xs[mask_right],ts[mask_right],lw=2)
+
+# x = -1: белый кружок (левый кусок), чёрный — (средний кусок)
+y_left_open   = -2*(-1) + 1
+y_mid_filled  = (-1)**2 - 3
+plt.scatter([-1],[y_left_open],  s=40, facecolors=&#x27;white&#x27;, edgecolors=&#x27;black&#x27;)
+plt.scatter([-1],[y_mid_filled], s=40, facecolors=&#x27;black&#x27;, edgecolors=&#x27;black&#x27;)
+
+# x = 1: чёрный кружок (средний кусок), белый — (правый кусок)
+y_mid_filled2 = (1)**2 - 3
+y_right_open  = 0.5
+plt.scatter([1],[y_mid_filled2], s=40, facecolors=&#x27;black&#x27;, edgecolors=&#x27;black&#x27;)
+plt.scatter([1],[y_right_open],  s=40, facecolors=&#x27;white&#x27;, edgecolors=&#x27;black&#x27;)
+
+plt.xlabel(&quot;ось x&quot;)
+plt.ylabel(&quot;t(x)&quot;)
+plt.title(&quot;Кусочно-заданная функция t(x)&quot;)
+plt.grid(alpha=.3)
+"></textarea>
+
+      <div id="out6" class="output"></div>
+    </div>
+  </section>
+
+  <hr class="sep"/>
+
+<script>
+let pyReadyPromise = null;
+const editors = {};
+
+/* инициализация CodeMirror для всех ячеек */
+function initEditors(){
+  document.querySelectorAll('textarea.codearea').forEach(ta=>{
+    const ed = CodeMirror.fromTextArea(ta,{
+      mode:'python',
+      theme:'eclipse',
+      lineNumbers:true,
+      autoCloseBrackets:true,
+      lineWrapping:true,
+      viewportMargin:Infinity
+    });
+    const orig = ta.getAttribute('data-original') || "# ВАШ КОД НИЖЕ:\n";
+    ed.setValue(orig);
+    editors[ta.id]=ed;
+  });
+}
+
+/* скопировать код одной ячейки */
+function copyCode(id){
+  const ed = editors[id];
+  const t  = ed ? ed.getValue() : "";
+  navigator.clipboard.writeText(t).then(()=>alert("Код скопирован"));
+}
+
+/* сбросить код конкретной ячейки к исходнику */
+function resetCode(id){
+  const ta = document.getElementById(id);
+  const orig = ta.getAttribute('data-original') || "# ВАШ КОД НИЖЕ:\n";
+  if(editors[id]) editors[id].setValue(orig);
+}
+
+/* очистить вывод */
+function clearOut(outId){
+  const outEl = document.getElementById(outId);
+  if(outEl){ outEl.innerHTML = ""; }
+}
+
+/* скачать вывод (результат выполнения: печать, числа и т.п.) */
+function saveOutputTxt(outId, filename='output.txt'){
+  const outEl = document.getElementById(outId);
+  const textContent = outEl ? outEl.innerText : "";
+  const blob = new Blob([textContent],{type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* скачать ВСЕ наброски кода (все ячейки сразу) */
+function saveAllCodes(){
+  let txt = "";
+  const ids = Object.keys(editors).sort(); // code1, code2, ...
+  ids.forEach((id,idx)=>{
+    txt += "### Ячейка " + (idx+1) + " ("+id+")\n";
+    txt += editors[id].getValue();
+    txt += "\n\n----------------------------------------\n\n";
+  });
+  const blob = new Blob([txt],{type:'text/plain;charset=utf-8'});
+  const a   = document.createElement('a');
+  a.href    = URL.createObjectURL(blob);
+  a.download= 'Ваши_решения.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* Pyodide подготовка */
+async function getPy(){
+  if(!pyReadyPromise){
+    pyReadyPromise = (async()=>{
+      const pyodide = await loadPyodide();
+      try{
+        await pyodide.loadPackage(['numpy','matplotlib']);
+      }catch(e){
+        console.warn('Не удалось подгрузить пакеты:', e);
+      }
+      return pyodide;
+    })();
+  }
+  return pyReadyPromise;
+}
+
+/* зачистка магии jupyter (%..., !..., get_ipython(...)) */
+function preprocessForPyodide(code){
+  const lines = code.replaceAll('\r\n','\n').split('\n');
+  const outLines = [];
+  for(const ln of lines){
+    if(/^\s*[!%]/.test(ln)){
+      outLines.push('# [ignored cell magic] ' + ln);
+    }else if(/get_ipython\s*\(/.test(ln)){
+      outLines.push('# [ignored get_ipython] ' + ln);
+    }else{
+      outLines.push(ln);
+    }
+  }
+  return outLines.join('\n');
+}
+
+/* запуск python-кода */
+async function runPy(codeId, outId){
+  const outEl = document.getElementById(outId);
+  outEl.innerHTML = "<span style='opacity:.85'>⏳ Выполняется…</span>";
+
+  const pyodide = await getPy();
+
+  const setup = `
+import sys, io, builtins
+buf_out, buf_err = io.StringIO(), io.StringIO()
+
+class _W:
+    def __init__(self,b): self.b=b
+    def write(self,s): self.b.write(s)
+    def flush(self): pass
+
+sys.stdout = _W(buf_out)
+sys.stderr = _W(buf_err)
+
+from js import prompt
+def _input(prompt_text=''):
+    r = prompt(str(prompt_text))
+    return '' if r is None else r
+
+import matplotlib
+matplotlib.use('module://matplotlib.backends.backend_agg')
+import matplotlib.pyplot as plt
+`;
+  try {
+    await pyodide.runPythonAsync(setup);
+
+    const ed = editors[codeId];
+    const rawCode = ed ? ed.getValue() : "";
+    const userCode = preprocessForPyodide(rawCode);
+
+    await pyodide.runPythonAsync(userCode);
+
+    const [stdoutText, stderrText, images] = await pyodide.runPythonAsync(`
+import base64, io
+from matplotlib import pyplot as plt
+import matplotlib
+
+outs = buf_out.getvalue()
+errs = buf_err.getvalue()
+imgs = []
+
+for f in list(matplotlib._pylab_helpers.Gcf.get_all_fig_managers()):
+    b = io.BytesIO()
+    f.canvas.figure.savefig(b, format='png', dpi=120, bbox_inches='tight')
+    imgs.append(base64.b64encode(b.getvalue()).decode())
+
+plt.close('all')
+outs, errs, imgs
+`);
+
+    outEl.innerHTML = "";
+    if(stdoutText && stdoutText.trim()){
+      const pre = document.createElement('pre');
+      pre.textContent = stdoutText;
+      outEl.appendChild(pre);
+    }
+
+    if(images && images.length){
+      for(const b64 of images){
+        const img = document.createElement('img');
+        img.src = 'data:image/png;base64,'+b64;
+        outEl.appendChild(img);
+      }
+    }
+
+    if(stderrText && stderrText.trim()){
+      const preErr = document.createElement('pre');
+      preErr.style.color='#ff6b6b';
+      preErr.textContent = stderrText;
+      outEl.appendChild(preErr);
+    }
+
+  } catch(e){
+    outEl.innerHTML = "<pre style='color:#ff6b6b'></pre>";
+    outEl.querySelector('pre').textContent = (e && e.message) ? e.message : String(e);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', initEditors);
+</script>
+
+</main>
+</body>
+</html>
