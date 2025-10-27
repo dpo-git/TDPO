@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Преобразования графиков</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- Pyodide -->
+<script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+
+<!-- JSZip (для .zip с картинками) -->
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+<!-- MathJax -->
+<script>
+window.MathJax = { tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]}, svg: {fontCache: 'global'} };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<style>
+:root {
+  --bg:#fff;
+  --fg:#202124;
+  --muted:#5f6368;
+  --border:#e0e3e7;
+  --accent:#1a73e8;
+  --code-bg:#f8f9fa;
+  --out-bg:#0b1020;
+  --out-fg:#e5e7eb;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--fg)}
+body{font-family:'Roboto',system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+main{max-width:1024px;margin:0 auto;padding:24px 16px 64px}
+
+header.page-title h1{margin:0 0 8px;font-size:28px;font-weight:700;line-height:1.25}
+.header-actions{margin-top:8px;}
+.header-actions .btn{
+  appearance:none;
+  padding:8px 14px;
+  font-size:14px;
+  border-radius:8px;
+  cursor:pointer;
+  line-height:1.2;
+  border:1px solid var(--accent);
+  background:var(--accent);
+  color:#fff;
+}
+
+.cell{margin:16px 0}
+hr.sep{margin:24px 0;border:0;border-top:1px solid var(--border)}
+
+.cell.md .md{
+  font-size:16px;
+  line-height:1.65
+}
+.cell.md .md h1,.cell.md .md h2{
+  margin:1.2em 0 .6em;
+  font-weight:700
+}
+.cell.md .md h1{font-size:1.4em}
+.cell.md .md h2{font-size:1.3em}
+.cell.md .md code{
+  background:#f1f3f4;
+  padding:2px 4px;
+  border-radius:4px;
+  font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace
+}
+.cell.md .md ul,.cell.md .md ol{
+  margin:.25em 0 1em;
+  padding-left:1.4em
+}
+.cell.md .md li{margin:.25em 0}
+.cell.md .md blockquote.md-hint{
+  margin:10px 0;
+  padding:10px 12px;
+  border-left:4px solid #0ea5e9;
+  background:#f0f9ff;
+  border-radius:8px
+}
+
+.cell.code .editor-wrap{
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 1px 2px rgba(0,0,0,.05);
+  padding-bottom:0;
+  overflow:hidden;
+}
+.cell-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:8px 12px;
+  background:#f8fbff;
+  border-bottom:1px solid var(--border);
+  flex-wrap:wrap
+}
+.badge{
+  color:var(--muted);
+  font-size:12px;
+  white-space:nowrap
+}
+.actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px
+}
+.actions .btn{
+  appearance:none;
+  padding:6px 10px;
+  font-size:13px;
+  border-radius:8px;
+  cursor:pointer;
+  border:1px solid var(--border);
+  background:#fff;
+  color:#202124;
+  line-height:1.2;
+}
+.actions .btn.run{
+  border:1px solid var(--accent);
+  background:var(--accent);
+  color:#fff
+}
+
+.form-area{
+  background:var(--code-bg);
+  border-bottom:1px solid var(--border);
+  padding:12px
+}
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));
+  gap:12px;
+  margin-bottom:12px
+}
+.form-field{
+  display:flex;
+  flex-direction:column;
+  font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace;
+  font-size:14px;
+  line-height:1.45
+}
+.form-field label{
+  font-weight:500;
+  color:#202124;
+  margin-bottom:4px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.form-field select,
+.form-field input{
+  appearance:none;
+  border:1px solid var(--border);
+  border-radius:6px;
+  background:#fff;
+  padding:6px 8px;
+  font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace;
+  font-size:14px;
+  line-height:1.4;
+  width:100%;
+}
+
+.small-hint{
+  margin:0;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.4;
+  font-family:'Roboto',system-ui,-apple-system,Segoe UI,Arial,sans-serif
+}
+
+.param-group{
+  padding:8px;
+  border:1px dashed var(--border);
+  border-radius:8px;
+  background:#fbfbfc;
+  margin-bottom:12px;
+}
+.param-group h4{
+  margin:0 0 6px 0;
+  font-size:13px;
+  font-weight:700;
+  color:#374151
+}
+
+.output{
+  background:var(--out-bg);
+  color:var(--out-fg);
+  padding:12px;
+  min-height:24px;
+  font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace;
+  font-size:14px;
+  line-height:1.45;
+  border-bottom-left-radius:12px;
+  border-bottom-right-radius:12px
+}
+.output pre{
+  margin:0 0 8px 0;
+  white-space:pre-wrap
+}
+.output img{
+  display:block;
+  margin:6px 0;
+  max-width:100%;
+  height:auto;
+  border:1px solid #222;
+  border-radius:6px;
+  background:#fff
+}
+</style>
+</head>
+<body>
+<main>
+  <header class="page-title">
+    <h1>N8 — Преобразования графиков</h1>
+    <div class="header-actions">
+      <button class="btn" onclick="saveSessionTxt()">💾 Скачать сессию</button>
+    </div>
+  </header>
+
+  <section class="cell md"><div class="md">
+    <h1># Что делает этот тренажёр</h1>
+    <p>Выберите базовую функцию \(f(x)\), задайте параметры преобразования \(A, B, h, m\) в формуле
+    \(g(x) = A \cdot f\big(B\cdot(x - h)\big) + m\), и нажмите «Построить версию».</p>
+
+    <p>Программа выведет краткое объяснение преобразования и построит три графика:</p>
+    <ul>
+      <li>исходная функция \(f(x)\),</li>
+      <li>преобразованная функция \(g(x)\),</li>
+      <li>обе функции на одном графике (для наглядного сравнения).</li>
+    </ul>
+
+    <blockquote class="md-hint">
+      <p><strong>Замечание о параметрах.</strong> Знак \(A\) отражает график относительно оси \(Ox\), знак \(B\) — относительно оси \(Oy\).
+      Параметр \(h\) сдвигает график вдоль оси \(x\) (вправо при \(h &gt; 0\)), параметр \(m\) — вдоль оси \(y\) (вверх при \(m &gt; 0\)).</p>
+    </blockquote>
+
+    <p>Вы можете построить несколько разных вариантов подряд — они будут накапливаться внизу на одной странице.
+    Затем вы можете скачать:
+    <ul>
+      <li>всю текстовую сессию (кнопка сверху «💾 Скачать сессию»),</li>
+      <li>все получившиеся картинки как архив .zip (кнопка «Скачать графики (.zip)» в блоке ниже).</li>
+    </ul></p>
+  </div></section>
+
+  <hr class="sep"/>
+
+  <section class="cell code">
+    <div class="editor-wrap">
+      <div class="cell-header">
+        <span class="badge">In&nbsp;[1]</span>
+        <div class="actions">
+          <button class="btn run" onclick="runN8('out1')">▶ Построить версию</button>
+          <button class="btn" onclick="clearOut('out1')">Очистить вывод</button>
+          <button class="btn" onclick="saveGraphsZip()">Скачать графики (.zip)</button>
+        </div>
+      </div>
+
+      <div class="form-area">
+
+        <!-- выбор базовой функции и параметры преобразования -->
+        <div class="form-grid">
+          <div class="form-field">
+            <label for="fsel">Базовая функция <code>f(x)</code></label>
+            <select id="fsel" onchange="updateParamVisibility()">
+              <option value="linear">Линейная (a·x + b)</option>
+              <option value="poly4">Полином степени ≤ 4</option>
+              <option value="abs">|x|</option>
+              <option value="sin">sin x</option>
+              <option value="cos">cos x</option>
+              <option value="tg">tg x</option>
+              <option value="ctg">ctg x</option>
+              <option value="sqrt">√x</option>
+              <option value="ln1p">ln(x+1)</option>
+              <option value="inv_xp1">1/(x+1)</option>
+              <option value="frac_axb_cxd">(a·x+b)/(c·x+d)</option>
+              <option value="a_plus_b_over_xpc">a + b/(x+c)</option>
+              <option value="exp_kx">e^{k₀·x}</option>
+              <option value="sgn">sgn(x)</option>
+              <option value="heaviside">Ступенька H(x)</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label><span>Преобразование:</span><code>g(x) = A·f(B·(x − h)) + m</code></label>
+            <div class="form-grid" style="grid-template-columns:repeat(4,minmax(90px,1fr));gap:8px">
+              <input id="A" type="text" placeholder="A" value="1">
+              <input id="B" type="text" placeholder="B" value="1">
+              <input id="h" type="text" placeholder="h" value="0">
+              <input id="m" type="text" placeholder="m" value="0">
+            </div>
+          </div>
+        </div>
+
+        <!-- параметры конкретной базовой функции -->
+        <div id="params-linear" class="param-group" style="display:none">
+          <h4>Линейная: f(x) = a_lin·x + b_lin</h4>
+          <div class="form-grid">
+            <div class="form-field"><label>a_lin</label><input id="a_lin" type="text" value="1"></div>
+            <div class="form-field"><label>b_lin</label><input id="b_lin" type="text" value="0"></div>
+          </div>
+        </div>
+
+        <div id="params-poly4" class="param-group" style="display:none">
+          <h4>Полином: f(x) = p4·x^4 + p3·x^3 + p2·x^2 + p1·x + p0</h4>
+          <div class="form-grid">
+            <div class="form-field"><label>p4</label><input id="p4" type="text" value="0"></div>
+            <div class="form-field"><label>p3</label><input id="p3" type="text" value="0"></div>
+            <div class="form-field"><label>p2</label><input id="p2" type="text" value="1"></div>
+            <div class="form-field"><label>p1</label><input id="p1" type="text" value="0"></div>
+            <div class="form-field"><label>p0</label><input id="p0" type="text" value="0"></div>
+          </div>
+        </div>
+
+        <div id="params-frac1" class="param-group" style="display:none">
+          <h4>Дробная: f(x) = (a·x + b) / (c·x + d)</h4>
+          <div class="form-grid">
+            <div class="form-field"><label>a</label><input id="fa" type="text" value="1"></div>
+            <div class="form-field"><label>b</label><input id="fb" type="text" value="0"></div>
+            <div class="form-field"><label>c</label><input id="fc" type="text" value="0"></div>
+            <div class="form-field"><label>d</label><input id="fd" type="text" value="1"></div>
+          </div>
+        </div>
+
+        <div id="params-frac2" class="param-group" style="display:none">
+          <h4>Дробная: f(x) = a₀ + b₀/(x + c₀)</h4>
+          <div class="form-grid">
+            <div class="form-field"><label>a₀</label><input id="fa0" type="text" value="0"></div>
+            <div class="form-field"><label>b₀</label><input id="fb0" type="text" value="1"></div>
+            <div class="form-field"><label>c₀</label><input id="fc0" type="text" value="0"></div>
+          </div>
+        </div>
+
+        <div id="params-exp" class="param-group" style="display:none">
+          <h4>Экспонента: f(x) = e^{k₀·x}</h4>
+          <div class="form-grid">
+            <div class="form-field"><label>k₀</label><input id="k0" type="text" value="1"></div>
+          </div>
+        </div>
+
+        <!-- пределы осей -->
+        <div id="params-axes" class="param-group" style="">
+          <h4>Пределы осей (масштаб графика)</h4>
+          <div class="form-grid" style="grid-template-columns:repeat(auto-fit,minmax(min(120px,100%),1fr));gap:8px">
+            <div class="form-field"><label>x_min</label><input id="x_min" type="text" value="-10"></div>
+            <div class="form-field"><label>x_max</label><input id="x_max" type="text" value="10"></div>
+            <div class="form-field"><label>y_min</label><input id="y_min" type="text" value="-10"></div>
+            <div class="form-field"><label>y_max</label><input id="y_max" type="text" value="10"></div>
+          </div>
+          <p class="small-hint">
+            Мы будем строить только внутри указанного окна.
+            Слишком большие значения (разрывы, асимптоты) обрезаются, чтобы не было "взрывов" графика.
+          </p>
+        </div>
+
+      </div>
+
+      <div id="out1" class="output"></div>
+    </div>
+  </section>
+
+  <hr class="sep"/>
+
+<script>
+let pyReadyPromise = null;
+
+// Логи
+let sessionLog = [];      // текстовые описания попыток
+let graphLog = [];        // массив { idx, imgs:[b64fig1,b64fig2,b64fig3] }
+let attemptCount = 0;
+
+// утилита чтения числа из поля
+function valNum(id){
+  const el = document.getElementById(id);
+  if(!el) return 0;
+  const raw = el.value.trim().replace(',', '.');
+  const v = parseFloat(raw);
+  return v;
+}
+
+// показать/скрыть блоки параметров для конкретной f(x)
+function updateParamVisibility(){
+  const f = document.getElementById('fsel').value;
+
+  for(const id of ['params-linear','params-poly4','params-frac1','params-frac2','params-exp']){
+    const el = document.getElementById(id);
+    if(el) el.style.display = 'none';
+  }
+
+  if(f === 'linear') document.getElementById('params-linear').style.display = '';
+  if(f === 'poly4') document.getElementById('params-poly4').style.display = '';
+  if(f === 'frac_axb_cxd') document.getElementById('params-frac1').style.display = '';
+  if(f === 'a_plus_b_over_xpc') document.getElementById('params-frac2').style.display = '';
+  if(f === 'exp_kx') document.getElementById('params-exp').style.display = '';
+}
+
+// очистить вывод и логи
+function clearOut(outId){
+  const outEl = document.getElementById(outId);
+  if(outEl){ outEl.innerHTML = ""; }
+  sessionLog = [];
+  graphLog = [];
+  attemptCount = 0;
+}
+
+// скачать текстовую сессию
+function saveSessionTxt(){
+  const txt = sessionLog.join("\n\n");
+  const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Ваша_сессия.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// скачать все графики как zip
+function saveGraphsZip(){
+  if(!graphLog.length){
+    alert("Пока нет сохранённых графиков. Сначала нажмите «▶ Построить версию».");
+    return;
+  }
+  const zip = new JSZip();
+  const mapping = ['f','g','fg'];  // базовая, преобразованная, обе вместе
+
+  graphLog.forEach(run => {
+    run.imgs.forEach((b64, idx) => {
+      const fname = `попытка${run.idx}_${mapping[idx]}.png`;
+      // кладём файл в zip; b64 без "data:image/png;base64," — значит обрежем префикс
+      const pure = b64.replace(/^data:image\/png;base64,/, '');
+      zip.file(fname, pure, {base64:true});
+    });
+  });
+
+  zip.generateAsync({type:"blob"}).then(function(content){
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(content);
+    a.download = 'Ваши_графики.zip';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+}
+
+// подготовка Pyodide
+async function getPy(){
+  if(!pyReadyPromise){
+    pyReadyPromise = (async()=>{
+      const pyodide = await loadPyodide();
+      try{
+        await pyodide.loadPackage(['numpy','matplotlib']);
+      }catch(e){
+        console.warn('Не удалось подгрузить пакеты:', e);
+      }
+      return pyodide;
+    })();
+  }
+  return pyReadyPromise;
+}
+
+// запускаем построение
+async function runN8(outId){
+  const outEl = document.getElementById(outId);
+  outEl.insertAdjacentHTML('beforeend','<pre style="opacity:.85">⏳ Построение…</pre>');
+
+  const ftype = document.getElementById('fsel').value;
+
+  const A   = valNum('A'),
+        B   = valNum('B'),
+        h   = valNum('h'),
+        m   = valNum('m'),
+        xmin = valNum('x_min'),
+        xmax = valNum('x_max'),
+        ymin = valNum('y_min'),
+        ymax = valNum('y_max');
+
+  // проверяем числа
+  if([A,B,h,m,xmin,xmax,ymin,ymax].some(x => Number.isNaN(x))){
+    alert('Пожалуйста, задайте A, B, h, m и пределы осей (x_min, x_max, y_min, y_max) числами.');
+    return;
+  }
+
+  // читаем коэффициенты базовой функции
+  const coeffs = {
+    a_lin: valNum('a_lin'), b_lin: valNum('b_lin'),
+    p4: valNum('p4'), p3: valNum('p3'), p2: valNum('p2'), p1: valNum('p1'), p0: valNum('p0'),
+    fa: valNum('fa'), fb: valNum('fb'), fc: valNum('fc'), fd: valNum('fd'),
+    fa0: valNum('fa0'), fb0: valNum('fb0'), fc0: valNum('fc0'),
+    k0: valNum('k0')
+  };
+  for(const k in coeffs){
+    if(Number.isNaN(coeffs[k])) coeffs[k] = 0;
+  }
+
+  const py = await getPy();
+
+  // подготовка stdout/stderr и backend без окна
+  const setup = `
+import sys, io
+buf_out, buf_err = io.StringIO(), io.StringIO()
+class _W:
+    def __init__(self,b): self.b=b
+    def write(self,s): self.b.write(s)
+    def flush(self): pass
+
+import matplotlib
+matplotlib.use('module://matplotlib.backends.backend_agg')
+import matplotlib.pyplot as plt
+import numpy as np
+
+sys.stdout = _W(buf_out)
+sys.stderr = _W(buf_err)
+`;
+  await py.runPythonAsync(setup);
+
+  // код питона с параметрами пользователя
+  const code = `
+import numpy as np, matplotlib.pyplot as plt
+
+# входные параметры из JS
+f_type = ${JSON.stringify(ftype)}
+
+A = float(${A})
+B = float(${B})
+h = float(${h})
+m = float(${m})
+
+x_min = float(${xmin})
+x_max = float(${xmax})
+y_min = float(${ymin})
+y_max = float(${ymax})
+
+a_lin = float(${coeffs.a_lin})
+b_lin = float(${coeffs.b_lin})
+
+p4 = float(${coeffs.p4})
+p3 = float(${coeffs.p3})
+p2 = float(${coeffs.p2})
+p1 = float(${coeffs.p1})
+p0 = float(${coeffs.p0})
+
+fa = float(${coeffs.fa})
+fb = float(${coeffs.fb})
+fc = float(${coeffs.fc})
+fd = float(${coeffs.fd})
+
+fa0 = float(${coeffs.fa0})
+fb0 = float(${coeffs.fb0})
+fc0 = float(${coeffs.fc0})
+
+k0 = float(${coeffs.k0})
+
+# подпись базовой функции
+def base_label():
+    if f_type == 'linear':
+        return f"f(x) = {a_lin}·x + {b_lin}"
+    if f_type == 'poly4':
+        return f"f(x) = {p4}·x^4 + {p3}·x^3 + {p2}·x^2 + {p1}·x + {p0}"
+    if f_type == 'abs':
+        return "f(x) = |x|"
+    if f_type == 'sin':
+        return "f(x) = sin x"
+    if f_type == 'cos':
+        return "f(x) = cos x"
+    if f_type == 'tg':
+        return "f(x) = tg x"
+    if f_type == 'ctg':
+        return "f(x) = ctg x"
+    if f_type == 'sqrt':
+        return "f(x) = √x"
+    if f_type == 'ln1p':
+        return "f(x) = ln(x+1)"
+    if f_type == 'inv_xp1':
+        return "f(x) = 1/(x+1)"
+    if f_type == 'frac_axb_cxd':
+        return f"f(x) = ({fa}·x + {fb})/({fc}·x + {fd})"
+    if f_type == 'a_plus_b_over_xpc':
+        return f"f(x) = {fa0} + {fb0}/(x + {fc0})"
+    if f_type == 'exp_kx':
+        return f"f(x) = e^({k0}·x)"
+    if f_type == 'sgn':
+        return "f(x) = sgn(x)"
+    if f_type == 'heaviside':
+        return "f(x) = H(x)"
+    return "f(x)"
+
+# домен (где функция определена) и значение f(x)
+def domain_mask(x):
+    # True там, где определено
+    if f_type in ('linear','poly4','abs','sin','cos','exp_kx','sgn','heaviside'):
+        return np.ones_like(x, dtype=bool)
+    if f_type == 'tg':
+        # tg x = sin/cos -> нет в точках cos x = 0
+        return np.abs(np.cos(x)) > 1e-3
+    if f_type == 'ctg':
+        # ctg x = cos/sin -> нет в точках sin x = 0
+        return np.abs(np.sin(x)) > 1e-3
+    if f_type == 'sqrt':
+        return x >= 0
+    if f_type == 'ln1p':
+        return x > -1
+    if f_type == 'inv_xp1':
+        return np.abs(x+1) > 1e-6
+    if f_type == 'frac_axb_cxd':
+        return np.abs(fc*x + fd) > 1e-6
+    if f_type == 'a_plus_b_over_xpc':
+        return np.abs(x + fc0) > 1e-6
+    return np.ones_like(x, dtype=bool)
+
+def f_base(x):
+    if f_type == 'linear':
+        return a_lin*x + b_lin
+    if f_type == 'poly4':
+        return p4*x**4 + p3*x**3 + p2*x**2 + p1*x + p0
+    if f_type == 'abs':
+        return np.abs(x)
+    if f_type == 'sin':
+        return np.sin(x)
+    if f_type == 'cos':
+        return np.cos(x)
+    if f_type == 'tg':
+        return np.tan(x)
+    if f_type == 'ctg':
+        return 1/np.tan(x)
+    if f_type == 'sqrt':
+        return np.sqrt(x)
+    if f_type == 'ln1p':
+        return np.log(x+1)
+    if f_type == 'inv_xp1':
+        return 1/(x+1)
+    if f_type == 'frac_axb_cxd':
+        return (fa*x + fb)/(fc*x + fd)
+    if f_type == 'a_plus_b_over_xpc':
+        return fa0 + fb0/(x + fc0)
+    if f_type == 'exp_kx':
+        return np.exp(k0*x)
+    if f_type == 'sgn':
+        return np.where(x>0,1, np.where(x<0,-1,0))
+    if f_type == 'heaviside':
+        return np.where(x>=0,1.0,0.0)
+    return np.zeros_like(x)
+
+# сетка x: учитываем домен sqrt / ln(x+1)
+def make_xs():
+    left = x_min
+    right = x_max
+    if f_type == 'sqrt':
+        # корень определён только справа
+        left = max(left, 0.0)
+    if f_type == 'ln1p':
+        # ln(x+1) определён при x>-1
+        left = max(left, -0.99)
+    # делаем сетку
+    return np.linspace(left, right, 2400)
+
+xs = make_xs()
+
+# базовая функция
+mask_f = domain_mask(xs)
+y_f = np.full_like(xs, np.nan, dtype=float)
+y_f[mask_f] = f_base(xs[mask_f])
+
+# преобразованная функция
+# сначала трансформация аргумента: x -> B*(x - h)
+x_tr = B*(xs - h)
+mask_g = domain_mask(x_tr)
+temp = np.full_like(x_tr, np.nan, dtype=float)
+temp[mask_g] = f_base(x_tr[mask_g])
+
+# sgn / H: не рисуем вертикальную "ступеньку" в 0 как бесконечно высокую стенку
+if f_type in ('sgn','heaviside'):
+    zero_mask = np.abs(xs) < 1e-6
+    temp[zero_mask] = np.nan
+
+y_g = A*temp + m
+
+# обрезаем "космические" значения за пределами окна по y,
+# чтобы не было огромных вертикальных всплесков
+Ylim = max(abs(y_min), abs(y_max), 1e-9)
+def clip_by_ylim(arr):
+    out = arr.copy()
+    out[np.abs(out) > Ylim] = np.nan
+    return out
+
+y_f_clip = clip_by_ylim(y_f)
+y_g_clip = clip_by_ylim(y_g)
+
+# текст-расшифровка преобразования
+def sign_word(val):
+    return "да" if val<0 else "нет"
+
+if abs(B) > 1:
+    horz = "сжатие по x"
+elif 0 < abs(B) < 1:
+    horz = "растяжение по x"
+else:
+    horz = "нет изменения по x"
+
+text = []
+text.append("Вы выбрали базовую функцию:")
+text.append(base_label())
+text.append("")
+text.append("Параметры преобразования:")
+text.append(f"A = {A}, B = {B}, h = {h}, m = {m}")
+text.append("")
+text.append("Получилось:")
+text.append(f"g(x) = {A} · f({B} · (x - {h})) + {m}")
+text.append("")
+text.append("Интерпретация:")
+text.append(f"- Отражение относительно оси Ox: {sign_word(A)}")
+text.append(f"- Отражение относительно оси Oy: {sign_word(B)}")
+text.append(f"- Горизонтальные изменения: {horz}")
+text.append(f"- Сдвиг по x: {'вправо' if h>0 else ('влево' if h<0 else 'нет')} на {abs(h)}")
+text.append(f"- Сдвиг по y: {'вверх' if m>0 else ('вниз' if m<0 else 'нет')} на {abs(m)}")
+
+print("\\n".join(text))
+
+# Фигура 1: только f(x)
+plt.figure(figsize=(6,3))
+plt.plot(xs, y_f_clip, lw=1.5)
+# спец-точки для sgn / Heaviside
+if f_type == 'sgn':
+    plt.scatter([0],[0], s=40, color='black')
+if f_type == 'heaviside':
+    plt.scatter([0],[1], s=40, color='black')
+plt.grid(alpha=.3)
+plt.xlabel("ось x")
+plt.ylabel("f(x)")
+plt.title("Базовая функция f(x)")
+plt.xlim(x_min, x_max)
+plt.ylim(y_min, y_max)
+
+# Фигура 2: только g(x)
+plt.figure(figsize=(6,3))
+plt.plot(xs, y_g_clip, lw=1.5)
+plt.grid(alpha=.3)
+plt.xlabel("ось x")
+plt.ylabel("g(x)")
+plt.title("Преобразованная функция g(x)")
+plt.xlim(x_min, x_max)
+plt.ylim(y_min, y_max)
+
+# Фигура 3: обе на одном графике
+plt.figure(figsize=(6,3))
+plt.plot(xs, y_f_clip, lw=1.2, label="f(x)")
+plt.plot(xs, y_g_clip, lw=1.2, label="g(x)")
+# отметки sgn/H в комбинированном графике тоже полезно подсветить
+if f_type == 'sgn':
+    plt.scatter([0],[0], s=40, color='black')
+if f_type == 'heaviside':
+    plt.scatter([0],[1], s=40, color='black')
+plt.grid(alpha=.3)
+plt.xlabel("ось x")
+plt.ylabel("f(x), g(x)")
+plt.title("Сравнение f(x) и g(x)")
+plt.xlim(x_min, x_max)
+plt.ylim(y_min, y_max)
+plt.legend(loc='best', fontsize=8)
+`;
+
+  await py.runPythonAsync(code);
+
+  // забираем stdout/stderr и графики (теперь их 3)
+  const [stdoutText, stderrText, images] = await py.runPythonAsync(`
+import base64, io
+from matplotlib import pyplot as plt
+import matplotlib
+
+outs = buf_out.getvalue()
+errs = buf_err.getvalue()
+imgs = []
+
+for f in list(matplotlib._pylab_helpers.Gcf.get_all_fig_managers()):
+    b = io.BytesIO()
+    f.canvas.figure.savefig(b, format='png', dpi=120, bbox_inches='tight')
+    imgs.append("data:image/png;base64," + base64.b64encode(b.getvalue()).decode())
+
+plt.close('all')
+outs, errs, imgs
+  `);
+
+  // удаляем индикатор "⏳ Построение…"
+  const lastPre = outEl.querySelector('pre:last-child');
+  if(lastPre && lastPre.textContent.includes('Построение…')) lastPre.remove();
+
+  // выводим текст
+  if(stdoutText && stdoutText.trim()){
+    const pre = document.createElement('pre');
+    pre.textContent = stdoutText;
+    outEl.appendChild(pre);
+
+    sessionLog.push(stdoutText.trim());
+  }
+
+  // выводим картинки
+  if(images && images.length){
+    for(const b64 of images){
+      const img = document.createElement('img');
+      img.src = b64;
+      outEl.appendChild(img);
+    }
+
+    attemptCount += 1;
+    graphLog.push({ idx: attemptCount, imgs: images });
+  }
+
+  // если была ошибка
+  if(stderrText && stderrText.trim()){
+    const preErr = document.createElement('pre');
+    preErr.style.color = '#ff6b6b';
+    preErr.textContent = stderrText;
+    outEl.appendChild(preErr);
+  }
+}
+
+// инициализация
+document.addEventListener('DOMContentLoaded', ()=>{
+  updateParamVisibility();
+});
+</script>
+
+</main>
+</body>
+</html>
