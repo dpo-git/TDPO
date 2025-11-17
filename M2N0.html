@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Карта неравенства</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- CodeMirror -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/eclipse.css">
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/python/python.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/closebrackets.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/comment/comment.js"></script>
+
+<!-- Pyodide -->
+<script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+
+<!-- MathJax -->
+<script>
+window.MathJax = { tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]}, svg: {fontCache: 'global'} };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<style>
+:root {
+  --bg:#fff; --fg:#202124; --muted:#5f6368; --border:#e0e3e7; --accent:#1a73e8;
+  --code-bg:#f8f9fa; --out-bg:#0b1020; --out-fg:#e5e7eb;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--fg)}
+body{font-family:'Roboto',system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+main{max-width:1024px;margin:0 auto;padding:24px 16px 64px}
+header.page-title h1{margin:0 0 12px;font-size:28px}
+
+.cell{margin:16px 0}
+
+/* Markdown */
+.cell.md .md{font-size:16px;line-height:1.65}
+.cell.md .md h1,.cell.md .md h2,.cell.md .md h3,.cell.md .md h4{margin:1.2em 0 .6em;font-weight:700}
+.cell.md .md h1{font-size:1.4em}
+.cell.md .md h2{font-size:1.3em}
+.cell.md .md h3{font-size:1.2em}
+.cell.md .md code{background:#f1f3f4;padding:2px 4px;border-radius:4px;font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace}
+.cell.md .md pre code{background:var(--code-bg);display:block;padding:10px;border:1px solid var(--border);border-radius:8px;white-space:pre-wrap}
+.cell.md .md ul,.cell.md .md ol{margin:.25em 0 1em;padding-left:1.4em}
+.cell.md .md li{margin:.25em 0}
+.cell.md .md li>p{margin:0}
+.md table.md-table{border-collapse:collapse;margin:12px 0;width:auto;max-width:100%}
+.md table.md-table th,.md table.md-table td{border:1px solid var(--border);padding:6px 10px;text-align:left;vertical-align:top}
+.md table.md-table thead th{background:#f6f8fa;font-weight:600}
+.cell.md .md hr.md-hr{
+  border:0;
+  border-top:1px solid var(--border);
+  margin:16px 0;
+}
+
+.cell.md .md blockquote.md-hint{
+  margin:10px 0; padding:10px 12px;
+  border-left:4px solid #8b5cf6;   /* фиолетовая полоска */
+  background:#f5f3ff;               /* светло-фиолетовый фон */
+  border-radius:8px;
+}
+.cell.md .md blockquote p{ margin:0; }
+
+/* collapsible answer */
+.cell.md .md details.md-answer{
+  margin:12px 0;
+  border:1px dashed #c7b8ff;
+  background:#f9f7ff;
+  border-radius:10px;
+  padding:8px 12px;
+}
+.cell.md .md details.md-answer > summary{
+  cursor:pointer;
+  font-weight:600;
+  outline:none;
+  list-style:none;
+}
+.cell.md .md details.md-answer > summary::-webkit-details-marker{ display:none; }
+.cell.md .md details.md-answer > pre{
+  margin:10px 0 0;
+  background:#f4f3ff;
+  border:1px solid #e6e1ff;
+  border-radius:8px;
+  padding:10px;
+  overflow:auto;
+}
+
+
+/* Code cells */
+.cell.code .editor-wrap{border:1px solid var(--border);border-radius:12px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.05);padding-bottom:0;resize:vertical;overflow:auto}
+.cell-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;background:#f8fbff;border-bottom:1px solid var(--border)}
+.badge{color:var(--muted);font-size:12px}
+.actions .btn{appearance:none;padding:6px 10px;font-size:13px;border-radius:8px;cursor:pointer;border:1px solid var(--border);background:#fff;color:#202124}
+.actions .btn.run{border-color:var(--accent);background:var(--accent);color:#fff}
+.actions .btn.clear,.actions .btn.copy,.actions .btn.reset{margin-left:6px}
+
+/* Показываем весь код, ничего не обрезаем */
+.CodeMirror{background:var(--code-bg);border-bottom:1px solid var(--border);font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace;font-size:14px;line-height:1.45;height:auto;max-height:none}
+
+/* Output */
+.output{background:var(--out-bg);color:var(--out-fg);padding:12px;min-height:24px;font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace}
+.output pre{margin:0;white-space:pre-wrap}
+
+hr.sep{margin:24px 0;border:0;border-top:1px solid var(--border)}
+footer.note{color:var(--muted);font-size:13px;margin-top:40px}
+</style>
+</head>
+<body>
+<main>
+  <header class="page-title"><h1>Карта неравенства</h1></header>
+  <section class="cell md"><div class="md">
+<p>Задача этого ноутбука &mdash; не только показать карту неравенства с параметром, но и <strong>научить строить её по шагам</strong>.</p>
+<p>Мы действуем по следующему алгоритму:</p>
+<ol>
+<li>Создаём сетку точек на плоскости $Oxa$.</li>
+<li>Описываем математическую модель: область определения и неравенство.</li>
+<li>Представляем логику задачи в трёхцветную картинку.</li>
+<li>Придумываем свою задачу, в которой подобная визуализация действительно помогает ученикам.</li>
+</ol>
+<p>После ознакомления с примером можно заменить выражение в дроби (или задать другую функцию)
+и посмотреть, как изменится карта.</p>
+</div></section>
+<hr class="sep"/>
+
+<section class="cell md"><div class="md">
+<h1># Шаг 1. Сетка на плоскости $(x,a)$</h1>
+<p>Эта ячейка уже заполнена: здесь мы создаём сетку значений <code>x</code> и <code>a</code> с помощью <code>np.meshgrid</code>.</p>
+<p>Её можно просто запускать, а затем задать пользовательские диапазоны и число точек, чтобы увидеть,
+как эти параметры влияет на качество изображения.</p>
+</div></section>
+<hr class="sep"/>
+
+
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[1]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code1','out1')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out1')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code1')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code1')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code1" class="codearea" data-original="import numpy as np
+
+# Шаг 1.
+# Создаём сетку точек на плоскости (x, a).
+# Попробуйте поиграть с границами диапазонов и числом точек.
+
+xs = np.linspace(-3, 5, 400)   # возможные значения x
+aas = np.linspace(-3, 5, 400)  # возможные значения a
+
+# X и A — двумерные массивы одной формы.
+# В каждой позиции (i, j) хранятся координаты очередной точки.
+X, A = np.meshgrid(xs, aas)
+
+print(&quot;Форма массива X:&quot;, X.shape)
+print(&quot;Форма массива A:&quot;, A.shape)
+print(&quot;Пример точки (x, a):&quot;, X[0, 0], A[0, 0])">import numpy as np
+
+# Шаг 1.
+# Создаём сетку точек на плоскости (x, a).
+# Попробуйте поиграть с границами диапазонов и числом точек.
+
+xs = np.linspace(-3, 5, 400)   # возможные значения x
+aas = np.linspace(-3, 5, 400)  # возможные значения a
+
+# X и A — двумерные массивы одной формы.
+# В каждой позиции (i, j) хранятся координаты очередной точки.
+X, A = np.meshgrid(xs, aas)
+
+print("Форма массива X:", X.shape)
+print("Форма массива A:", A.shape)
+print("Пример точки (x, a):", X[0, 0], A[0, 0])</textarea>
+  </div>
+  <div id="out1" class="output"></div>
+</section>
+<hr class="sep"/>
+
+<section class="cell md"><div class="md">
+<h1># Шаг 2. Описываем математическую модель: ОДЗ и неравенство</h1>
+<p>Теперь нужно перевести условие задачи в две функции на Python:</p>
+<ul>
+<li><code>in_domain(x, a)</code> &mdash; принадлежит ли точка <code>(x, a)</code> области определения;</li>
+<li><code>is_true(x, a)</code> &mdash; верно ли неравенство в этой точке.</li>
+</ul>
+<p>В примере рассматриваем неравенство $\frac{x^2 - a}{x - 1} \geq 0$, но вы можете
+подставить любую другую функцию: радикал, логарифм, модуль и т.д.</p>
+<p><strong>⬇️ Напишите свой код в ячейке ниже.</strong></p>
+</div></section>
+<hr class="sep"/>
+
+
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[2]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code2','out2')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out2')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code2')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code2')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code2" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+  </div>
+  <div id="out2" class="output"></div>
+</section>
+<hr class="sep"/>
+
+<section class="cell md"><div class="md">
+<details>
+<summary>💡 Подсказка</summary>
+<ul>
+<li>Начните с математической задачи: есть выражение и условие &laquo;неравенство верно или не верно&raquo;.</li>
+<li>В области определения нужно исключить те $x$, которые обращают в ноль знаменатель или дают некорректные значения выражения под корнем, логарифмом и т.п.</li>
+<li>В примере с дробью $\frac{x^2 - a}{x - 1} \geq 0$ выколотой является точка $x=1$.
+На сетке, как правило, обычно вырезают узкую полоску вокруг $x=1$, чтобы область вне ОДЗ была заметна.</li>
+<li>Функция <code>is_true</code> должна возвращать логическое значение: результат сравнения вашего выражения с $0$.</li>
+</ul>
+</details>
+</div></section>
+<hr class="sep"/>
+
+<section class="cell md"><div class="md">
+<details>
+<summary>🧩 Посмотреть правильный ответ</summary>
+<pre><code>import numpy as np
+
+# Полуширина «запрещённой» полосы вокруг x = 1.
+# Вне ОДЗ только точка x = 1,
+# Однако на сетке она может не попасть в узлы, поэтому делаем полосу.
+EPS = 0.05
+
+def in_domain(x, a):
+    &quot;&quot;&quot;Проверяем, принадлежит ли точка (x, a) области определения.&quot;&quot;&quot;
+    # Разрешаем все x, кроме небольшой полосы вокруг 1:
+    # |x - 1| &gt;= EPS — в ОДЗ, |x - 1| &lt; EPS — считаем вне ОДЗ.
+    return np.abs(x - 1) &gt;= EPS
+
+def is_true(x, a):
+    &quot;&quot;&quot;Проверяем, выполняется ли неравенство (x^2 - a)/(x - 1) &gt;= 0.&quot;&quot;&quot;
+    # Здесь можно менять числитель и знаменатель как угодно:
+    # например, x**2 - 2*x + a или другое выражение с параметром.
+    num = x**2 - a       # числитель дроби
+    denom = x - 1        # знаменатель дроби
+    frac = num / denom   # само выражение
+    return frac &gt;= 0     # неравенство верно? True/False</code></pre>
+</details>
+</div></section>
+<hr class="sep"/>
+
+<section class="cell md"><div class="md">
+<h1># Шаг 3. Строим карту значений: -1, 0, 1</h1>
+<p>Теперь, когда функции <code>in_domain</code> и <code>is_true</code> готовы, можно построить карту:</p>
+<ul>
+<li>$-1$ &mdash; точка вне области определения (белый цвет);</li>
+<li>$0$ &mdash; неравенство ложно (например, синий цвет);</li>
+<li>$1$ &mdash; неравенство истинно (например, красный цвет).</li>
+</ul>
+<p>На практике при работе c сеткой стоит чуть &laquo;расширить&raquo; запрещённые точки до узких полос
+(в примере это окрестность $x=1$), чтобы они были видны на рисунке.
+</p>
+<p><strong>⬇️ Напишите свой код в ячейке ниже.</strong></p>
+</div></section>
+<hr class="sep"/>
+
+
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[3]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code3','out3')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out3')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code3')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code3')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code3" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+  </div>
+  <div id="out3" class="output"></div>
+</section>
+<hr class="sep"/>
+
+<section class="cell md"><div class="md">
+<details>
+<summary>💡 Подсказка</summary>
+<ul>
+<li>Создайте массив <code>holds</code>, заполненный $-1$ (по умолчанию все значения вне ОДЗ).</li>
+<li>Затем найдите множество значений, удовлетворяющее нашему &laquo;ОДЗ&raquo; с помощью <code>in_domain(X, A)</code>.</li>
+<li>На этих точках вычислите <code>is_true(X, A)</code> и запишите соответствующее значение ($0$ или $1$) в <code>holds</code>.</li>
+<li>Для визуализации используйте <code>imshow</code> и дискретную палитру через <code>ListedColormap</code> и <code>BoundaryNorm</code>.</li>
+<li>Поиграйте с диапазонами по осям и параметром <code>EPS</code>, чтобы увидеть, как меняется картинка.</li>
+</ul>
+</details>
+</div></section>
+<hr class="sep"/>
+
+<section class="cell md"><div class="md">
+<details>
+<summary>🧩 Посмотреть правильный ответ</summary>
+<pre><code>import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap, BoundaryNorm
+
+# 1. Повторяем построение сетки
+xs = np.linspace(-3, 5, 400)
+aas = np.linspace(-3, 5, 400)
+X, A = np.meshgrid(xs, aas)
+
+# 2. Область определения: где можно подставлять (x, a)
+mask_odz = in_domain(X, A)
+
+# 3. Массив для результата:
+#    -1 — вне ОДЗ, 0 — неравенство ложно, 1 — неравенство истинно
+holds = np.full_like(X, -1, dtype=int)
+
+# 4. Вычисляем, где неравенство верно/неверно,
+#    только на точках из области определения
+vals = np.zeros_like(X, dtype=bool)
+vals[mask_odz] = is_true(X[mask_odz], A[mask_odz])
+
+holds[mask_odz &amp; vals] = 1   # в ОДЗ и истина
+holds[mask_odz &amp; ~vals] = 0  # в ОДЗ и ложь
+
+# 5. Задаём три фиксированных цвета
+cmap = ListedColormap(["white", "blue", "red"])
+bounds = [-1.5, -0.5, 0.5, 1.5]
+norm = BoundaryNorm(bounds, cmap.N)
+
+# 6. Рисуем картинку
+plt.figure(figsize=(6, 5))
+im = plt.imshow(
+    holds,
+    extent=[xs.min(), xs.max(), aas.min(), aas.max()],
+    origin=&quot;lower&quot;,
+    aspect=&quot;auto&quot;,
+    cmap=cmap,
+    norm=norm,
+)
+plt.xlabel(&quot;x&quot;)
+plt.ylabel(&quot;a&quot;)
+plt.title(&quot;Карта: -1 — вне ОДЗ, 0 — ложь, 1 — истина&quot;)
+
+# 7. Аккуратная цветовая шкала
+cbar = plt.colorbar(im, shrink=0.8)
+cbar.set_ticks([-1, 0, 1])
+cbar.set_ticklabels([&quot;вне ОДЗ&quot;, &quot;ложь&quot;, &quot;истина&quot;])
+cbar.ax.invert_yaxis()
+
+plt.show()</code></pre>
+</details>
+</div></section>
+<hr class="sep"/>
+
+<section class="cell md"><div class="md">
+<h1># Шаг 4. Своя задача и методический комментарий</h1>
+<p>Теперь ваша очередь придумать задачу с параметром, в которой такая визуализация поможет лучше разобраться в решении ученикам.</p>
+<p><strong>Задание.</strong> Сформулируйте свою задачу (её условие вы вдальнейшем загрузите на платформу)
+и напишите код, который строит для неё карту на плоскости $Oxa$ по аналогии с шагами&nbsp;1-3.</p>
+<p><strong>⬇️ Напишите свой код в ячейке ниже.</strong></p>
+</div></section>
+<hr class="sep"/>
+
+
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[4]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code4','out4')">▶ Запустить</button>
+        <button class="btn clear" onclick="clearOut('out4')">Очистить вывод</button>
+        <button class="btn copy" onclick="copyCode('code4')">Скопировать</button>
+        <button class="btn reset" onclick="resetCode('code4')">Сброс</button>
+      </div>
+    </div>
+    <textarea id="code4" class="codearea" data-original="# ВАШ КОД НИЖЕ:
+"># ВАШ КОД НИЖЕ:
+</textarea>
+  </div>
+  <div id="out4" class="output"></div>
+</section>
+<hr class="sep"/>
+
+<section class="cell md"><div class="md">
+<details>
+<summary>💡 Подсказка</summary>
+<ul>
+<li>Выберите задачу, где действительно полезно видеть область решений на плоскости (x, a):
+например, неравенство с дробями, радикалами, модулем.</li>
+<li>Сформулируйте условие так, чтобы его можно было дать старшеклассникам:
+отдельно пропишите ОДЗ, отдельно поясните, что именно нужно исследовать.</li>
+<li>Используйте шаги 1–3 как заготовку кода, но перепишите функцию <code>is_true</code>
+и, при необходимости, <code>in_domain</code> под свою задачу.</li>
+<li>Подумайте, какой вопрос вы зададите ученикам по картинке:
+например, &laquo;для каких a решений нет&raquo;, &laquo;при каких a решения только при x &gt; 0&raquo; и т.п.</li>
+</ul>
+</details>
+</div></section>
+<hr class="sep"/>
+
+<section class="cell md"><div class="md">
+<details>
+<summary>🧩 Посмотреть правильный ответ</summary>
+<pre><code>import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap, BoundaryNorm
+
+# Пример возможной авторской задачи:
+# (x^2 - 2*a*x + 1) / (x - 1) &gt;= 0, x != 1
+
+xs = np.linspace(-3, 5, 400)
+aas = np.linspace(-3, 5, 400)
+X, A = np.meshgrid(xs, aas)
+
+EPS = 0.05
+
+def in_domain2(x, a):
+    &quot;&quot;&quot;Область определения: исключаем окрестность x = 1.&quot;&quot;&quot;
+    return np.abs(x - 1) &gt;= EPS
+
+def is_true2(x, a):
+    &quot;&quot;&quot;Неравенство (x^2 - 2*a*x + 1)/(x - 1) &gt;= 0.&quot;&quot;&quot;
+    num = x**2 - 2*a*x + 1
+    denom = x - 1
+    return (num / denom) &gt;= 0
+
+mask_odz = in_domain2(X, A)
+holds = np.full_like(X, -1, dtype=int)
+
+vals = np.zeros_like(X, dtype=bool)
+vals[mask_odz] = is_true2(X[mask_odz], A[mask_odz])
+
+holds[mask_odz &amp; vals] = 1
+holds[mask_odz &amp; ~vals] = 0
+
+cmap = ListedColormap(["white", "blue", "red"])
+bounds = [-1.5, -0.5, 0.5, 1.5]
+norm = BoundaryNorm(bounds, cmap.N)
+
+plt.figure(figsize=(6, 5))
+im = plt.imshow(
+    holds,
+    extent=[xs.min(), xs.max(), aas.min(), aas.max()],
+    origin=&quot;lower&quot;,
+    aspect=&quot;auto&quot;,
+    cmap=cmap,
+    norm=norm,
+)
+plt.xlabel(&quot;x&quot;)
+plt.ylabel(&quot;a&quot;)
+plt.title(&quot;Авторская задача: область решений на плоскости (x, a)&quot;)
+
+cbar = plt.colorbar(im, shrink=0.8)
+cbar.set_ticks([-1, 0, 1])
+cbar.set_ticklabels([&quot;вне ОДЗ&quot;, &quot;ложь&quot;, &quot;истина&quot;])
+cbar.ax.invert_yaxis()
+
+plt.show()</code></pre>
+<p><em>Это лишь пример возможной авторской задачи. Для отчёта на платформе важно придумать и реализовать свою.</em></p>
+</details>
+</div></section>
+<hr class="sep"/>
+
+  <footer class="note">@ Смирнов И.С.</footer>
+</main>
+
+<script>
+const editors = {};
+document.querySelectorAll('textarea.codearea').forEach(ta=>{
+  const ed = CodeMirror.fromTextArea(ta,{
+    mode:'python', theme:'eclipse', lineNumbers:true,
+    autoCloseBrackets:true, lineWrapping:true, viewportMargin:Infinity
+  });
+  ed.setValue(ta.getAttribute('data-original')||ta.value);
+  editors[ta.id]=ed;
+});
+function copyCode(id){const ed=editors[id];const t=ed?ed.getValue():(document.getElementById(id)?.value||"");navigator.clipboard.writeText(t).then(()=>alert('Код скопирован'))}
+function resetCode(id){const ta=document.getElementById(id);const o=ta.getAttribute('data-original')||'';if(editors[id]) editors[id].setValue(o); else ta.value=o}
+function clearOut(id){const el=document.getElementById(id); if(el) el.innerHTML=''}
+
+let pyReady=(async()=>{const py=await loadPyodide();try{await py.loadPackage(['numpy','pandas','matplotlib']);}catch(e){console.warn('Pkg warn',e)}return py})();
+
+function preprocessForPyodide(code){
+  const lines=code.replaceAll('\r\n','\n').split('\n');
+  const out=[];
+  for(let ln of lines){
+    if(/^\s*[!%]/.test(ln)) out.push('# [ignored colab magic] '+ln);
+    else if(/get_ipython\s*\(/.test(ln)) out.push('# [ignored get_ipython] '+ln);
+    else out.push(ln);
+  }
+  return out.join('\n');
+}
+
+async function runPy(codeId,outId){
+  const out=document.getElementById(outId);
+  out.innerHTML="<span style='opacity:.85'>⏳ Выполняется…</span>";
+  const py=await pyReady;
+  const setup=`
+import sys, io, builtins
+buf_out, buf_err = io.StringIO(), io.StringIO()
+
+class _W:
+    def __init__(self, b):
+        self.b = b
+    def write(self, s):
+        self.b.write(s)
+    def flush(self):
+        pass
+
+sys.stdout, sys.stderr = _W(buf_out), _W(buf_err)
+
+from js import prompt
+
+def _input(prompt_text=""):
+    r = prompt(str(prompt_text))
+    return "" if r is None else r
+
+builtins.input = _input
+
+# --- Подавляем предупреждения Matplotlib и отключаем "окна" ---
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="matplotlib")
+
+import matplotlib
+matplotlib.use("module://matplotlib.backends.backend_agg")
+import matplotlib.pyplot as plt
+
+# Делаем plt.show "тихим": фигуры всё равно поймает код ниже и выведет как PNG
+plt.show = lambda *a, **k: None
+`;
+  try{
+    await py.runPythonAsync(setup);
+    const code=editors[codeId]?editors[codeId].getValue():(document.getElementById(codeId)?.value||"");
+    const prep=preprocessForPyodide(code);
+    await py.runPythonAsync(prep);
+    const [stdoutText,stderrText,images]=await py.runPythonAsync(`
+import base64, io
+from matplotlib import pyplot as plt
+import matplotlib
+outs = buf_out.getvalue()
+errs = buf_err.getvalue()
+imgs = []
+for f in list(matplotlib._pylab_helpers.Gcf.get_all_fig_managers()):
+    b = io.BytesIO()
+    f.canvas.figure.savefig(b, format='png', dpi=120, bbox_inches='tight')
+    imgs.append(base64.b64encode(b.getvalue()).decode())
+plt.close('all')
+outs, errs, imgs
+`);
+    out.innerHTML="";
+    if(stdoutText && stdoutText.trim()){const pre=document.createElement('pre');pre.textContent=stdoutText;out.appendChild(pre)}
+    if(images && images.length){for(const b64 of images){const img=document.createElement('img');img.src='data:image/png;base64,'+b64;img.style.display='block';img.style.margin='8px 0';out.appendChild(img)}}
+    if(stderrText && stderrText.trim()){const pre=document.createElement('pre');pre.style.color='#ff6b6b';pre.textContent=stderrText;out.appendChild(pre)}
+  }catch(e){
+    out.innerHTML = "<pre style='color:#ff6b6b'></pre>";
+    out.querySelector('pre').textContent = (e && e.message) ? e.message : String(e);
+  }
+}
+</script>
+
+<script>
+(function () {
+  function getEditorValue(textarea) {
+    const wrap = textarea.closest('.editor-wrap');
+    const cmDiv = wrap ? wrap.querySelector('.CodeMirror') : null;
+    const cm = cmDiv && cmDiv.CodeMirror ? cmDiv.CodeMirror : null;
+    return cm && typeof cm.getValue === 'function'
+      ? cm.getValue()
+      : textarea.value || '';
+  }
+
+  function clean(s) {
+    return (s || '').replace(/\r\n/g, '\n').trim();
+  }
+
+  function isPlaceholderOnly(val) {
+    const noSpaces = val.replace(/[ \t]/g, '');
+    if (/^#?ВАШКОДНИЖЕ[:：]?\s*$/i.test(noSpaces)) return true;
+    const lines = val.split('\n').map(l => l.trim());
+    return lines.every(l => l === '' || l.startsWith('#'));
+  }
+
+  function collectUserCode() {
+    const blocks = [];
+    const codeareas = Array.from(document.querySelectorAll('textarea.codearea'));
+
+    codeareas.forEach((ta, idx) => {
+      const current = clean(getEditorValue(ta));
+      const original = clean(ta.getAttribute('data-original'));
+
+      if (current && current !== original && !isPlaceholderOnly(current)) {
+        let cellNum = idx + 1;
+        const header = ta.closest('.editor-wrap')?.querySelector('.cell-header');
+        const badge = header?.querySelector('.badge');
+        const m = badge && badge.textContent ? badge.textContent.match(/\[(\d+)\]/) : null;
+        if (m) cellNum = Number(m[1]);
+
+        blocks.push({
+          num: cellNum,
+          code: current
+        });
+      }
+    });
+
+    blocks.sort((a, b) => a.num - b.num);
+    return blocks;
+  }
+
+  function buildTxt(blocks) {
+    if (!blocks.length) {
+      return '# Решения не найдены: похоже, Вы не изменили ни одну ячейку.';
+    }
+    const parts = blocks.map(b => [
+      `# Ячейка кода №${b.num}:`,
+      '',
+      b.code,
+      ''
+    ].join('\n'));
+    return parts.join('\n');
+  }
+
+  function downloadTxt(filename, text) {
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename || 'Ваши_решения.txt';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 0);
+  }
+
+  function addDownloadButton() {
+    const header = document.querySelector('header.page-title') || document.querySelector('main');
+    if (!header || header.querySelector('#download-solutions-btn')) return;
+
+    const btn = document.createElement('button');
+    btn.id = 'download-solutions-btn';
+    btn.textContent = '💾 Скачать решения';
+    btn.style.cssText = [
+      'margin: 8px 0 0 0',
+      'padding: 8px 12px',
+      'border-radius: 10px',
+      'border: 1px solid #1a73e8',
+      'background: #1a73e8',
+      'color: #fff',
+      'font-size: 14px',
+      'cursor: pointer'
+    ].join(';');
+
+    btn.addEventListener('click', () => {
+      const blocks = collectUserCode();
+      const txt = buildTxt(blocks);
+      downloadTxt('Ваши_решения.txt', txt);
+    });
+
+    header.appendChild(btn);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addDownloadButton);
+  } else {
+    addDownloadButton();
+  }
+})();
+</script>
+
+</body>
+</html>
