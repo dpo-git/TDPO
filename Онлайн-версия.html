@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<!-- build: 2026-02-01T16:59:16+00:00 -->
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Занятие 1 — ЗБЧ и ЦПТ</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- CodeMirror -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/eclipse.css">
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/python/python.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/closebrackets.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/comment/comment.js"></script>
+
+<!-- Pyodide -->
+<script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+
+<!-- MathJax -->
+<script>
+window.MathJax = { tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]}, svg: {fontCache: 'global'} };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<style>
+:root {
+  --bg:#fff; --fg:#202124; --muted:#5f6368; --border:#e0e3e7; --accent:#1a73e8;
+  --code-bg:#f8f9fa; --out-bg:#0b1020; --out-fg:#e5e7eb;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--fg)}
+body{font-family:'Roboto',system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+main{max-width:1024px;margin:0 auto;padding:24px 16px 64px}
+header.page-title h1{margin:0 0 12px;font-size:28px}
+
+.cell{margin:16px 0}
+
+/* Markdown */
+.cell.md .md{font-size:16px;line-height:1.65}
+.cell.md .md h1,.cell.md .md h2,.cell.md .md h3,.cell.md .md h4{margin:1.2em 0 .6em;font-weight:700}
+.cell.md .md h1{font-size:1.4em}
+.cell.md .md h2{font-size:1.3em}
+.cell.md .md h3{font-size:1.2em}
+.cell.md .md code{background:#f1f3f4;padding:2px 4px;border-radius:4px;font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace}
+.cell.md .md pre code{background:var(--code-bg);display:block;padding:10px;border:1px solid var(--border);border-radius:8px;white-space:pre-wrap}
+.cell.md .md ul,.cell.md .md ol{margin:.25em 0 1em;padding-left:1.4em}
+.cell.md .md li{margin:.25em 0}
+.cell.md .md li>p{margin:0}
+.md table.md-table{border-collapse:collapse;margin:12px 0;width:auto;max-width:100%}
+.md table.md-table th,.md table.md-table td{border:1px solid var(--border);padding:6px 10px;text-align:left;vertical-align:top}
+.md table.md-table thead th{background:#f6f8fa;font-weight:600}
+.cell.md .md hr.md-hr{
+  border:0;
+  border-top:1px solid var(--border);
+  margin:16px 0;
+}
+
+.cell.md .md blockquote.md-hint{
+  margin:10px 0; padding:10px 12px;
+  border-left:4px solid #8b5cf6;   /* фиолетовая полоска */
+  background:#f5f3ff;               /* светло-фиолетовый фон */
+  border-radius:8px;
+}
+.cell.md .md blockquote p{ margin:0; }
+
+/* collapsible answer */
+.cell.md .md details.md-answer{
+  margin:12px 0;
+  border:1px dashed #c7b8ff;
+  background:#f9f7ff;
+  border-radius:10px;
+  padding:8px 12px;
+}
+.cell.md .md details.md-answer > summary{
+  cursor:pointer;
+  font-weight:600;
+  outline:none;
+  list-style:none;
+}
+.cell.md .md details.md-answer > summary::-webkit-details-marker{ display:none; }
+.cell.md .md details.md-answer > pre{
+  margin:10px 0 0;
+  background:#f4f3ff;
+  border:1px solid #e6e1ff;
+  border-radius:8px;
+  padding:10px;
+  overflow:auto;
+}
+
+
+/* Code cells */
+.cell.code .editor-wrap{border:1px solid var(--border);border-radius:12px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.05);padding-bottom:0;resize:vertical;overflow:auto}
+.cell-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;background:#f8fbff;border-bottom:1px solid var(--border)}
+.badge{color:var(--muted);font-size:12px}
+.actions .btn{appearance:none;padding:6px 10px;font-size:13px;border-radius:8px;cursor:pointer;border:1px solid var(--border);background:#fff;color:#202124}
+.actions .btn.run{border-color:var(--accent);background:var(--accent);color:#fff}
+.actions .btn.clear,.actions .btn.copy,.actions .btn.reset{margin-left:6px}
+
+/* Показываем весь код, ничего не обрезаем */
+.CodeMirror{background:var(--code-bg);border-bottom:1px solid var(--border);font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace;font-size:14px;line-height:1.45;height:auto;max-height:none}
+
+/* Output */
+.output{background:var(--out-bg);color:var(--out-fg);padding:12px;min-height:24px;font-family:'Roboto Mono',ui-monospace,Menlo,Consolas,monospace;overflow-x:auto}
+.output pre{margin:0;white-space:pre-wrap}
+
+/* Responsive plots */
+.output img{
+  max-width:100%;
+  height:auto;
+  max-height:80vh;
+  object-fit:contain;
+  display:block;
+  margin:10px auto;
+  cursor:zoom-in;
+}
+
+hr.sep{margin:24px 0;border:0;border-top:1px solid var(--border)}
+footer.note{color:var(--muted);font-size:13px;margin-top:40px}
+.btn.run {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+
+/* Fullscreen image viewer */
+.img-modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.85);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  z-index:9999;
+}
+.img-modal.open{display:flex}
+.img-modal img{
+  max-width:95vw;
+  max-height:95vh;
+  height:auto;
+  width:auto;
+  cursor:zoom-out;
+}
+
+</style>
+</head>
+<body>
+<main>
+  <header class="page-title"><h1>Занятие 1 — ЗБЧ и ЦПТ</h1></header>
+
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[1]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code1','out1')">▶ Запустить</button>
+        </div>
+    </div>
+    <textarea id="code1" class="codearea" data-original="import os&#10;import math&#10;import numpy as np&#10;import matplotlib.pyplot as plt&#10;import matplotlib as mpl&#10;from matplotlib.ticker import FuncFormatter&#10;&#10;mpl.rcParams[&#x27;mathtext.fontset&#x27;] = &#x27;stix&#x27;&#10;mpl.rcParams[&#x27;font.family&#x27;] = &#x27;STIXGeneral&#x27;&#10;&#10;mpl.rcParams[&#x27;font.size&#x27;] = 14&#10;mpl.rcParams[&#x27;axes.titlesize&#x27;] = 16&#10;mpl.rcParams[&#x27;axes.labelsize&#x27;] = 14&#10;mpl.rcParams[&#x27;legend.fontsize&#x27;] = 12&#10;mpl.rcParams[&#x27;xtick.labelsize&#x27;] = 12&#10;mpl.rcParams[&#x27;ytick.labelsize&#x27;] = 12&#10;&#10;FIG_DIR = &quot;figures&quot;&#10;os.makedirs(FIG_DIR, exist_ok=True)&#10;&#10;def savefig(name: str, dpi: int = 150):&#10;    &quot;&quot;&quot;Сохранить текущую фигуру в папку figures/&quot;&quot;&quot;&#10;    path = os.path.join(FIG_DIR, name)&#10;    plt.savefig(path, dpi=dpi, bbox_inches=&quot;tight&quot;)&#10;    return path&#10;&#10;def _ru_num(x: float) -&gt; str:&#10;    &quot;&quot;&quot;Формат числа с запятой вместо точки.&quot;&quot;&quot;&#10;    s = f&quot;{x:.6g}&quot;&#10;    s = s.replace(&#x27;.&#x27;, &#x27;,&#x27;)&#10;    if s == &#x27;-0&#x27;:&#10;        s = &#x27;0&#x27;&#10;    return s&#10;&#10;def apply_ru_decimal(ax):&#10;    &quot;&quot;&quot;Поставить запятую в делителе десятичных дробей на осях.&quot;&quot;&quot;&#10;    ax.xaxis.set_major_formatter(FuncFormatter(lambda x, pos: _ru_num(x)))&#10;    ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: _ru_num(x)))&#10;&#10;def fmt_ru(x: float, digits: int = 2) -&gt; str:&#10;    &quot;&quot;&quot;Формат числа в тексте (например, mu=3,5).&quot;&quot;&quot;&#10;    return f&quot;{x:.{digits}f}&quot;.replace(&#x27;.&#x27;, &#x27;,&#x27;)&#10;&#10;np.random.seed(2026)&#10;&#10;print(&quot;☑️&quot;)">
+import os
+import math
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+from matplotlib.ticker import FuncFormatter
+
+mpl.rcParams[&#x27;mathtext.fontset&#x27;] = &#x27;stix&#x27;
+mpl.rcParams[&#x27;font.family&#x27;] = &#x27;STIXGeneral&#x27;
+
+mpl.rcParams[&#x27;font.size&#x27;] = 14
+mpl.rcParams[&#x27;axes.titlesize&#x27;] = 16
+mpl.rcParams[&#x27;axes.labelsize&#x27;] = 14
+mpl.rcParams[&#x27;legend.fontsize&#x27;] = 12
+mpl.rcParams[&#x27;xtick.labelsize&#x27;] = 12
+mpl.rcParams[&#x27;ytick.labelsize&#x27;] = 12
+
+FIG_DIR = &quot;figures&quot;
+os.makedirs(FIG_DIR, exist_ok=True)
+
+def savefig(name: str, dpi: int = 150):
+    &quot;&quot;&quot;Сохранить текущую фигуру в папку figures/&quot;&quot;&quot;
+    path = os.path.join(FIG_DIR, name)
+    plt.savefig(path, dpi=dpi, bbox_inches=&quot;tight&quot;)
+    return path
+
+def _ru_num(x: float) -&gt; str:
+    &quot;&quot;&quot;Формат числа с запятой вместо точки.&quot;&quot;&quot;
+    s = f&quot;{x:.6g}&quot;
+    s = s.replace(&#x27;.&#x27;, &#x27;,&#x27;)
+    if s == &#x27;-0&#x27;:
+        s = &#x27;0&#x27;
+    return s
+
+def apply_ru_decimal(ax):
+    &quot;&quot;&quot;Поставить запятую в делителе десятичных дробей на осях.&quot;&quot;&quot;
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda x, pos: _ru_num(x)))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: _ru_num(x)))
+
+def fmt_ru(x: float, digits: int = 2) -&gt; str:
+    &quot;&quot;&quot;Формат числа в тексте (например, mu=3,5).&quot;&quot;&quot;
+    return f&quot;{x:.{digits}f}&quot;.replace(&#x27;.&#x27;, &#x27;,&#x27;)
+
+np.random.seed(2026)
+
+print(&quot;☑️&quot;)
+</textarea>
+    <div id="out1" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h2>1. Закон больших чисел</h2>
+
+<p>Если <span class="math">$X_1,\dots,X_n$</span> независимы и одинаково распределены, <span class="math">$\mathbb{E}[X_i]=\mu$</span>, <span class="math">$\mathrm{D}(X_i)=\sigma^2&lt;\infty$</span>, то</p>
+
+<p><div class="math">$$\overline{X}_n=\frac{1}{n}\sum_{i=1}^n X_i \xrightarrow{P} \mu, \quad n\to\infty.$$</div></p>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h3>1.1 Иллюстрация 1 — Подбрасывание монеты</h3>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[2]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code2','out2')">▶ Запустить</button>
+        </div>
+    </div>
+    <textarea id="code2" class="codearea" data-original="np.random.seed(2026)  # воспроизводимость: при каждом запуске ячейки результат одинаковый&#10;&#10;n = 1000  # меняйте: 10, 100, 1000 ...&#10;&#10;p = 0.5&#10;p_hat = np.random.binomial(1, p, n).cumsum() / np.arange(1, n + 1)&#10;&#10;fig, ax = plt.subplots(figsize=(10, 4))&#10;ax.plot(np.arange(1, n + 1), p_hat, color=&#x27;tab:blue&#x27;, label=r&#x27;$\hat{p}_n$ (доля орлов)&#x27;)&#10;ax.axhline(p, color=&#x27;red&#x27;, linestyle=&#x27;--&#x27;, linewidth=2, label=r&#x27;$p=0{,}5$&#x27;)&#10;&#10;ax.set_xlabel(r&#x27;$n$ — число бросков&#x27;)&#10;ax.set_ylabel(r&#x27;$\hat{p}_n$&#x27;)&#10;ax.set_title(r&#x27;Сходимость к математическому ожиданию – ЗБЧ: $\hat{p}_n \to p$ при $n\to\infty$&#x27;)&#10;ax.grid(alpha=0.3)&#10;ax.legend()&#10;&#10;apply_ru_decimal(ax)&#10;&#10;savefig(&#x27;1_1_lln_coin.png&#x27;)&#10;plt.show()">
+np.random.seed(2026)  # воспроизводимость: при каждом запуске ячейки результат одинаковый
+
+n = 1000  # меняйте: 10, 100, 1000 ...
+
+p = 0.5
+p_hat = np.random.binomial(1, p, n).cumsum() / np.arange(1, n + 1)
+
+fig, ax = plt.subplots(figsize=(10, 4))
+ax.plot(np.arange(1, n + 1), p_hat, color=&#x27;tab:blue&#x27;, label=r&#x27;$\hat{p}_n$ (доля орлов)&#x27;)
+ax.axhline(p, color=&#x27;red&#x27;, linestyle=&#x27;--&#x27;, linewidth=2, label=r&#x27;$p=0{,}5$&#x27;)
+
+ax.set_xlabel(r&#x27;$n$ — число бросков&#x27;)
+ax.set_ylabel(r&#x27;$\hat{p}_n$&#x27;)
+ax.set_title(r&#x27;Сходимость к математическому ожиданию – ЗБЧ: $\hat{p}_n \to p$ при $n\to\infty$&#x27;)
+ax.grid(alpha=0.3)
+ax.legend()
+
+apply_ru_decimal(ax)
+
+savefig(&#x27;1_1_lln_coin.png&#x27;)
+plt.show()
+</textarea>
+    <div id="out2" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h3>1.2 Иллюстрация 2 — Сходимость среднего (разные распределения)</h3>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[3]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code3','out3')">▶ Запустить</button>
+        </div>
+    </div>
+    <textarea id="code3" class="codearea" data-original="np.random.seed(2026)  # воспроизводимость: при каждом запуске ячейки результат одинаковый&#10;&#10;n = 2000  # меняйте: 200, 500, 1000, ...&#10;&#10;# Три распределения с одинаковым математическим ожиданием mu=5&#10;data1 = np.random.uniform(0, 10, n)   &#10;data2 = np.random.exponential(5, n)   &#10;data3 = np.random.normal(5, 2, n)     &#10;&#10;avg1 = np.cumsum(data1) / np.arange(1, n + 1)&#10;avg2 = np.cumsum(data2) / np.arange(1, n + 1)&#10;avg3 = np.cumsum(data3) / np.arange(1, n + 1)&#10;&#10;fig, ax = plt.subplots(figsize=(12, 4))&#10;ax.plot(avg1, label=r&#x27;Равномерное $U[0,10],\ \mu=5$&#x27;)&#10;ax.plot(avg2, label=r&#x27;Экспоненциальное $\mathrm{Exp}(\lambda=0{,}2),\ \mu=5$&#x27;)&#10;ax.plot(avg3, label=r&#x27;Нормальное $\mathcal{N}(5,2^2),\ \mu=5$&#x27;)&#10;ax.axhline(5, color=&#x27;red&#x27;, linestyle=&#x27;--&#x27;, linewidth=2, label=r&#x27;$\mu=5$&#x27;)&#10;&#10;ax.set_xlabel(r&#x27;$n$&#x27;)&#10;ax.set_ylabel(r&#x27;$\overline{X}_n$&#x27;)&#10;ax.set_title(r&#x27;ЗБЧ: $\overline{X}_n \to \mu$ (разные распределения)&#x27;)&#10;ax.grid(alpha=0.3)&#10;ax.legend()&#10;ax.set_xlim(0, n)&#10;ax.set_ylim(3, 7)&#10;&#10;apply_ru_decimal(ax)&#10;&#10;savefig(&#x27;1_2_lln_three_distributions.png&#x27;)&#10;plt.show()">
+np.random.seed(2026)  # воспроизводимость: при каждом запуске ячейки результат одинаковый
+
+n = 2000  # меняйте: 200, 500, 1000, ...
+
+# Три распределения с одинаковым математическим ожиданием mu=5
+data1 = np.random.uniform(0, 10, n)   
+data2 = np.random.exponential(5, n)   
+data3 = np.random.normal(5, 2, n)     
+
+avg1 = np.cumsum(data1) / np.arange(1, n + 1)
+avg2 = np.cumsum(data2) / np.arange(1, n + 1)
+avg3 = np.cumsum(data3) / np.arange(1, n + 1)
+
+fig, ax = plt.subplots(figsize=(12, 4))
+ax.plot(avg1, label=r&#x27;Равномерное $U[0,10],\ \mu=5$&#x27;)
+ax.plot(avg2, label=r&#x27;Экспоненциальное $\mathrm{Exp}(\lambda=0{,}2),\ \mu=5$&#x27;)
+ax.plot(avg3, label=r&#x27;Нормальное $\mathcal{N}(5,2^2),\ \mu=5$&#x27;)
+ax.axhline(5, color=&#x27;red&#x27;, linestyle=&#x27;--&#x27;, linewidth=2, label=r&#x27;$\mu=5$&#x27;)
+
+ax.set_xlabel(r&#x27;$n$&#x27;)
+ax.set_ylabel(r&#x27;$\overline{X}_n$&#x27;)
+ax.set_title(r&#x27;ЗБЧ: $\overline{X}_n \to \mu$ (разные распределения)&#x27;)
+ax.grid(alpha=0.3)
+ax.legend()
+ax.set_xlim(0, n)
+ax.set_ylim(3, 7)
+
+apply_ru_decimal(ax)
+
+savefig(&#x27;1_2_lln_three_distributions.png&#x27;)
+plt.show()
+</textarea>
+    <div id="out3" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h3>1.3 Иллюстрация 3 — Контрпример: распределение Коши (матожидание не существует)</h3>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[4]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code4','out4')">▶ Запустить</button>
+        </div>
+    </div>
+    <textarea id="code4" class="codearea" data-original="np.random.seed(2026)  # воспроизводимость: при каждом запуске ячейки результат одинаковый&#10;&#10;n_max = 2000  # меняйте: 200, 500, 1000, ...&#10;&#10;cauchy_samples = np.random.standard_cauchy(n_max)&#10;cauchy_avg = np.cumsum(cauchy_samples) / np.arange(1, n_max + 1)&#10;&#10;normal_samples = np.random.normal(0, 1, n_max)&#10;normal_avg = np.cumsum(normal_samples) / np.arange(1, n_max + 1)&#10;&#10;fig, ax = plt.subplots(figsize=(12, 5))&#10;ax.plot(normal_avg, linewidth=2, label=r&#x27;Нормальное $\mathcal{N}(0,1)$ (сходится)&#x27;)&#10;ax.plot(cauchy_avg, linewidth=1.5, alpha=0.7, label=&#x27;Коши (контрпример)&#x27;)&#10;ax.axhline(0, color=&#x27;red&#x27;, linestyle=&#x27;--&#x27;, linewidth=2, alpha=0.8)&#10;&#10;ax.set_xlabel(r&#x27;$n$&#x27;)&#10;ax.set_ylabel(r&#x27;$\overline{X}_n$&#x27;)&#10;ax.set_title(&#x27;ЗБЧ: нормальное (сходится) vs Коши (НЕ сходится)&#x27;)&#10;ax.legend()&#10;ax.grid(alpha=0.3, linestyle=&#x27;--&#x27;)&#10;ax.set_ylim(-10, 10)&#10;ax.set_xlim(0, n_max)&#10;plt.tight_layout()&#10;&#10;apply_ru_decimal(ax)&#10;&#10;savefig(&#x27;1_3_lln_cauchy_vs_normal.png&#x27;)&#10;plt.show()">
+np.random.seed(2026)  # воспроизводимость: при каждом запуске ячейки результат одинаковый
+
+n_max = 2000  # меняйте: 200, 500, 1000, ...
+
+cauchy_samples = np.random.standard_cauchy(n_max)
+cauchy_avg = np.cumsum(cauchy_samples) / np.arange(1, n_max + 1)
+
+normal_samples = np.random.normal(0, 1, n_max)
+normal_avg = np.cumsum(normal_samples) / np.arange(1, n_max + 1)
+
+fig, ax = plt.subplots(figsize=(12, 5))
+ax.plot(normal_avg, linewidth=2, label=r&#x27;Нормальное $\mathcal{N}(0,1)$ (сходится)&#x27;)
+ax.plot(cauchy_avg, linewidth=1.5, alpha=0.7, label=&#x27;Коши (контрпример)&#x27;)
+ax.axhline(0, color=&#x27;red&#x27;, linestyle=&#x27;--&#x27;, linewidth=2, alpha=0.8)
+
+ax.set_xlabel(r&#x27;$n$&#x27;)
+ax.set_ylabel(r&#x27;$\overline{X}_n$&#x27;)
+ax.set_title(&#x27;ЗБЧ: нормальное (сходится) vs Коши (НЕ сходится)&#x27;)
+ax.legend()
+ax.grid(alpha=0.3, linestyle=&#x27;--&#x27;)
+ax.set_ylim(-10, 10)
+ax.set_xlim(0, n_max)
+plt.tight_layout()
+
+apply_ru_decimal(ax)
+
+savefig(&#x27;1_3_lln_cauchy_vs_normal.png&#x27;)
+plt.show()
+</textarea>
+    <div id="out4" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h2>2. Центральная предельная теорема</h2>
+
+<p>Если <span class="math">$\mathbb{E}[X_i]=\mu$</span> и <span class="math">$\mathrm{D}(X_i)=\sigma^2&lt;\infty$</span>, то</p>
+
+<p><div class="math">$$
+\frac{\sum_{i=1}^n X_i - n\mu}{\sigma\sqrt{n}} \Rightarrow \mathcal{N}(0,1).
+$$</div></p>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h3>2.1 Иллюстрация 1 — Сумма очков на кубиках</h3>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[5]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code5','out5')">▶ Запустить</button>
+        </div>
+    </div>
+    <textarea id="code5" class="codearea" data-original="np.random.seed(2026)  # воспроизводимость: при каждом запуске ячейки результат одинаковый&#10;&#10;n_rep = 20000  # число экспериментов (меняйте: 200, 2000, 20000, ...)&#10;&#10;fig, axes = plt.subplots(2, 2, figsize=(13, 10))&#10;axes = axes.flatten()&#10;&#10;for ax, n_dice in zip(axes, [1, 2, 5, 30]):&#10;    sums = np.random.randint(1, 7, size=(n_rep, n_dice)).sum(axis=1)&#10;&#10;    mu = n_dice * 3.5&#10;    sigma = math.sqrt(n_dice * 35 / 12)&#10;&#10;    ax.hist(sums, bins=40, density=True, alpha=0.7, edgecolor=&#x27;black&#x27;)&#10;&#10;    x = np.linspace(sums.min(), sums.max(), 400)&#10;    pdf = 1 / (sigma * math.sqrt(2 * math.pi)) * np.exp(-0.5 * ((x - mu) / sigma) ** 2)&#10;    ax.plot(x, pdf, &#x27;r--&#x27;, linewidth=2.5, label=r&#x27;$\mathcal{N}(\mu,\sigma^2)$&#x27;)&#10;&#10;    ax.set_title(rf&#x27;$n={n_dice}$: $\mu={fmt_ru(mu,1)}$, $\sigma={fmt_ru(sigma,2)}$&#x27;)&#10;    ax.set_xlabel(&#x27;Сумма очков&#x27;)&#10;    ax.set_ylabel(&#x27;Плотность&#x27;)&#10;    ax.legend()&#10;    ax.grid(alpha=0.3)&#10;&#10;    apply_ru_decimal(ax)&#10;&#10;fig.suptitle(&#x27;ЦПТ: суммы очков на кубиках → приближение нормальным распределением&#x27;, fontsize=16, fontweight=&#x27;bold&#x27;)&#10;fig.tight_layout()&#10;&#10;fig_path = os.path.join(FIG_DIR, &#x27;2_1_clt_dice_sums.png&#x27;)&#10;fig.savefig(fig_path, dpi=150, bbox_inches=&#x27;tight&#x27;)&#10;plt.show()">
+np.random.seed(2026)  # воспроизводимость: при каждом запуске ячейки результат одинаковый
+
+n_rep = 20000  # число экспериментов (меняйте: 200, 2000, 20000, ...)
+
+fig, axes = plt.subplots(2, 2, figsize=(13, 10))
+axes = axes.flatten()
+
+for ax, n_dice in zip(axes, [1, 2, 5, 30]):
+    sums = np.random.randint(1, 7, size=(n_rep, n_dice)).sum(axis=1)
+
+    mu = n_dice * 3.5
+    sigma = math.sqrt(n_dice * 35 / 12)
+
+    ax.hist(sums, bins=40, density=True, alpha=0.7, edgecolor=&#x27;black&#x27;)
+
+    x = np.linspace(sums.min(), sums.max(), 400)
+    pdf = 1 / (sigma * math.sqrt(2 * math.pi)) * np.exp(-0.5 * ((x - mu) / sigma) ** 2)
+    ax.plot(x, pdf, &#x27;r--&#x27;, linewidth=2.5, label=r&#x27;$\mathcal{N}(\mu,\sigma^2)$&#x27;)
+
+    ax.set_title(rf&#x27;$n={n_dice}$: $\mu={fmt_ru(mu,1)}$, $\sigma={fmt_ru(sigma,2)}$&#x27;)
+    ax.set_xlabel(&#x27;Сумма очков&#x27;)
+    ax.set_ylabel(&#x27;Плотность&#x27;)
+    ax.legend()
+    ax.grid(alpha=0.3)
+
+    apply_ru_decimal(ax)
+
+fig.suptitle(&#x27;ЦПТ: суммы очков на кубиках → приближение нормальным распределением&#x27;, fontsize=16, fontweight=&#x27;bold&#x27;)
+fig.tight_layout()
+
+fig_path = os.path.join(FIG_DIR, &#x27;2_1_clt_dice_sums.png&#x27;)
+fig.savefig(fig_path, dpi=150, bbox_inches=&#x27;tight&#x27;)
+plt.show()
+</textarea>
+    <div id="out5" class="output"></div>
+  </div>
+</section>
+<hr class="sep"/>
+<section class="cell md"><div class="md">
+<h3>2.2 Иллюстрация 2 — Среднее из <span class="math">$n$</span> наблюдений для разных распределений</h3>
+
+</div></section>
+<hr class="sep"/>
+<section class="cell code">
+  <div class="editor-wrap">
+    <div class="cell-header">
+      <span class="badge">In&nbsp;[6]</span>
+      <div class="actions">
+        <button class="btn run" onclick="runPy('code6','out6')">▶ Запустить</button>
+        </div>
+    </div>
+    <textarea id="code6" class="codearea" data-original="np.random.seed(2026)  # воспроизводимость: при каждом запуске ячейки результат одинаковый&#10;&#10;n_rep = 10000  # число экспериментов&#10;n = 30         # объём выборки (меняйте: 10, 30, 50, ...)&#10;&#10;fig, axes = plt.subplots(1, 3, figsize=(15, 4))&#10;&#10;distributions = [&#10;    (r&#x27;Равномерное $U[0,1]$&#x27;, np.random.uniform(0, 1, size=(n_rep, n)), 0.5, math.sqrt(1 / 12)),&#10;    (r&#x27;Экспоненциальное $\mathrm{Exp}(\lambda=1)$&#x27;, np.random.exponential(1, size=(n_rep, n)), 1.0, 1.0),&#10;    (r&#x27;Бернулли $B(p=0{,}3)$&#x27;, np.random.binomial(1, 0.3, size=(n_rep, n)), 0.3, math.sqrt(0.3 * 0.7)),&#10;]&#10;&#10;for ax, (name, data, mu, sigma) in zip(axes, distributions):&#10;    means = data.mean(axis=1)&#10;&#10;    ax.hist(means, bins=40, density=True, alpha=0.7, edgecolor=&#x27;black&#x27;)&#10;&#10;    sigma_mean = sigma / math.sqrt(n)&#10;    x = np.linspace(means.min(), means.max(), 400)&#10;    pdf = 1 / (sigma_mean * math.sqrt(2 * math.pi)) * np.exp(-0.5 * ((x - mu) / sigma_mean) ** 2)&#10;&#10;    ax.plot(x, pdf, &#x27;r--&#x27;, linewidth=2.5, label=r&#x27;$\mathcal{N}(\mu,\frac{\sigma^2}{n})$&#x27;)&#10;&#10;    ax.set_title(name + f&#x27;\n(среднее из n={n})&#x27;)&#10;    ax.set_xlabel(r&#x27;$\overline{X}_n$&#x27;)&#10;    ax.set_ylabel(&#x27;Плотность&#x27;)&#10;    ax.legend()&#10;    ax.grid(alpha=0.3)&#10;&#10;    apply_ru_decimal(ax)&#10;&#10;fig.suptitle(&#x27;ЦПТ: разные исходные распределения → нормальное среднее&#x27;, fontsize=16, fontweight=&#x27;bold&#x27;)&#10;fig.tight_layout()&#10;&#10;fig_path = os.path.join(FIG_DIR, &#x27;2_2_clt_means_three_distributions.png&#x27;)&#10;fig.savefig(fig_path, dpi=150, bbox_inches=&#x27;tight&#x27;)&#10;plt.show()">
+np.random.seed(2026)  # воспроизводимость: при каждом запуске ячейки результат одинаковый
+
+n_rep = 10000  # число экспериментов
+n = 30         # объём выборки (меняйте: 10, 30, 50, ...)
+
+fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+
+distributions = [
+    (r&#x27;Равномерное $U[0,1]$&#x27;, np.random.uniform(0, 1, size=(n_rep, n)), 0.5, math.sqrt(1 / 12)),
+    (r&#x27;Экспоненциальное $\mathrm{Exp}(\lambda=1)$&#x27;, np.random.exponential(1, size=(n_rep, n)), 1.0, 1.0),
+    (r&#x27;Бернулли $B(p=0{,}3)$&#x27;, np.random.binomial(1, 0.3, size=(n_rep, n)), 0.3, math.sqrt(0.3 * 0.7)),
+]
+
+for ax, (name, data, mu, sigma) in zip(axes, distributions):
+    means = data.mean(axis=1)
+
+    ax.hist(means, bins=40, density=True, alpha=0.7, edgecolor=&#x27;black&#x27;)
+
+    sigma_mean = sigma / math.sqrt(n)
+    x = np.linspace(means.min(), means.max(), 400)
+    pdf = 1 / (sigma_mean * math.sqrt(2 * math.pi)) * np.exp(-0.5 * ((x - mu) / sigma_mean) ** 2)
+
+    ax.plot(x, pdf, &#x27;r--&#x27;, linewidth=2.5, label=r&#x27;$\mathcal{N}(\mu,\frac{\sigma^2}{n})$&#x27;)
+
+    ax.set_title(name + f&#x27;\n(среднее из n={n})&#x27;)
+    ax.set_xlabel(r&#x27;$\overline{X}_n$&#x27;)
+    ax.set_ylabel(&#x27;Плотность&#x27;)
+    ax.legend()
+    ax.grid(alpha=0.3)
+
+    apply_ru_decimal(ax)
+
+fig.suptitle(&#x27;ЦПТ: разные исходные распределения → нормальное среднее&#x27;, fontsize=16, fontweight=&#x27;bold&#x27;)
+fig.tight_layout()
+
+fig_path = os.path.join(FIG_DIR, &#x27;2_2_clt_means_three_distributions.png&#x27;)
+fig.savefig(fig_path, dpi=150, bbox_inches=&#x27;tight&#x27;)
+plt.show()
+</textarea>
+    <div id="out6" class="output"></div>
+  </div>
+</section>
+
+  <footer class="note">(интерактивная HTML‑версия ноутбука)</footer>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/python/python.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/closebrackets.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/comment/comment.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<script>
+const editors = {};
+document.querySelectorAll('textarea.codearea').forEach(ta=>{
+  const ed = CodeMirror.fromTextArea(ta,{
+    mode:'python', theme:'eclipse', lineNumbers:true,
+    autoCloseBrackets:true, lineWrapping:true, viewportMargin:Infinity
+  });
+  ed.setValue(ta.getAttribute('data-original')||ta.value);
+  editors[ta.id]=ed;
+});
+function copyCode(id){const ed=editors[id];const t=ed?ed.getValue():(document.getElementById(id)?.value||"");navigator.clipboard.writeText(t).then(()=>alert('Код скопирован'))}
+function resetCode(id){const ta=document.getElementById(id);const o=ta.getAttribute('data-original')||'';if(editors[id]) editors[id].setValue(o); else ta.value=o}
+function clearOut(id){const el=document.getElementById(id); if(el) el.innerHTML=''}
+
+let pyReady=(async()=>{const py=await loadPyodide();try{await py.loadPackage(['numpy','pandas','matplotlib']);}catch(e){console.warn('Pkg warn',e)}return py})();
+
+function preprocessForPyodide(code){
+  const lines=code.replaceAll('\r\n','\n').split('\n');
+  const out=[];
+  for(let ln of lines){
+    if(/^\s*[!%]/.test(ln)) out.push('# [ignored colab magic] '+ln);
+    else if(/get_ipython\s*\(/.test(ln)) out.push('# [ignored get_ipython] '+ln);
+    else out.push(ln);
+  }
+  return out.join('\n');
+}
+
+async function runPy(codeId,outId){
+  const out=document.getElementById(outId);
+  out.innerHTML="<span style='opacity:.85'>⏳ Выполняется…</span>";
+  const py=await pyReady;
+  const setup = `
+import sys, io, builtins
+buf_out, buf_err = io.StringIO(), io.StringIO()
+class _W:
+    def __init__(self, b): self.b = b
+    def write(self, s): self.b.write(s)
+    def flush(self): pass
+sys.stdout, sys.stderr = _W(buf_out), _W(buf_err)
+from js import prompt
+def _input(prompt_text=""):
+    r = prompt(str(prompt_text))
+    return "" if r is None else r
+builtins.input = _input
+
+# --- Подавляем предупреждения Matplotlib ---
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="matplotlib")
+
+import matplotlib
+matplotlib.use("module://matplotlib.backends.backend_agg")
+import matplotlib.pyplot as plt
+plt.show = lambda *a, **k: None
+
+import ast
+def __run_cell(__code):
+    # emulate Jupyter: if last line is an expression, print its value (unless None)
+    tree = ast.parse(__code, mode="exec")
+    if tree.body and isinstance(tree.body[-1], ast.Expr):
+        last = tree.body.pop()
+        assign = ast.Assign(targets=[ast.Name(id="__last_expr", ctx=ast.Store())], value=last.value)
+        tree.body.append(assign)
+        ast.fix_missing_locations(tree)
+        exec(compile(tree, "<cell>", "exec"), globals())
+        val = globals().get("__last_expr", None)
+        if val is not None:
+            print(val)
+    else:
+        exec(compile(tree, "<cell>", "exec"), globals())
+`;
+  try{
+    await py.runPythonAsync(setup);
+    const code=editors[codeId]?editors[codeId].getValue():(document.getElementById(codeId)?.value||"");
+    const prep=preprocessForPyodide(code);
+    await py.runPythonAsync("__run_cell(" + JSON.stringify(prep) + ")");
+    const [stdoutText,stderrText,images]=await py.runPythonAsync(`
+import base64, io
+from matplotlib import pyplot as plt
+import matplotlib
+outs = buf_out.getvalue()
+errs = buf_err.getvalue()
+imgs = []
+for f in list(matplotlib._pylab_helpers.Gcf.get_all_fig_managers()):
+    b = io.BytesIO()
+    f.canvas.figure.savefig(b, format='png', dpi=120, bbox_inches='tight')
+    imgs.append(base64.b64encode(b.getvalue()).decode())
+plt.close('all')
+outs, errs, imgs
+`);
+    out.innerHTML="";
+    if(stdoutText && stdoutText.trim()){const pre=document.createElement('pre');pre.textContent=stdoutText;out.appendChild(pre)}
+    if(images && images.length){for(const b64 of images){const img=document.createElement('img');img.src='data:image/png;base64,'+b64;img.className='out-img';img.addEventListener('click',()=>openImg(img.src));out.appendChild(img)}}
+    if(stderrText && stderrText.trim()){const pre=document.createElement('pre');pre.style.color='#ff6b6b';pre.textContent=stderrText;out.appendChild(pre)}
+  }catch(e){
+    out.innerHTML = "<pre style='color:#ff6b6b'></pre>";
+    out.querySelector('pre').textContent = (e && e.message) ? e.message : String(e);
+  }
+}
+
+function openImg(src){
+  const modal=document.getElementById('imgModal');
+  const img=document.getElementById('imgModalImg');
+  img.src=src;
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden','false');
+}
+function closeImg(){
+  const modal=document.getElementById('imgModal');
+  const img=document.getElementById('imgModalImg');
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden','true');
+  img.src='';
+}
+document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeImg(); });
+document.addEventListener('click', (e)=>{
+  const modal=document.getElementById('imgModal');
+  if(!modal) return;
+  if(modal.classList.contains('open') && (e.target===modal || e.target.id==='imgModalImg')){
+    closeImg();
+  }
+});
+
+</script>
+
+
+<!-- Image modal -->
+<div id="imgModal" class="img-modal" aria-hidden="true">
+  <img id="imgModalImg" alt="plot">
+</div>
+
+</body>
+</html>
