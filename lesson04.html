@@ -185,7 +185,7 @@ setupDrag();
 <script>
 function sendHeight() {
   const height = document.documentElement.scrollHeight || document.body.scrollHeight;
-  parent.postMessage({ type: 'lesson03', height }, '*');
+  parent.postMessage({ type: 'lesson04', height }, '*');
 }
 window.addEventListener('load', sendHeight);
 window.addEventListener('resize', sendHeight);
