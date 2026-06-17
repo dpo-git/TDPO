@@ -82,8 +82,14 @@ function resetStar(){['leftStar','rightStar'].forEach(id=>[...document.getElemen
 setupStar();
 </script>
 <script>
-function sendHeight(){const height=document.documentElement.scrollHeight||document.body.scrollHeight;parent.postMessage({type:'lesson06',height},'*');}
-window.addEventListener('load',sendHeight);window.addEventListener('resize',sendHeight);const observer=new MutationObserver(sendHeight);observer.observe(document.body,{childList:true,subtree:true,attributes:true});
+function sendHeight() {
+  const height = document.documentElement.scrollHeight || document.body.scrollHeight;
+  parent.postMessage({ type: 'lesson06', height }, '*');
+}
+window.addEventListener('load', sendHeight);
+window.addEventListener('resize', sendHeight);
+const observer = new MutationObserver(sendHeight);
+observer.observe(document.body, { childList: true, subtree: true, attributes: true });
 </script>
 </body>
 </html>
