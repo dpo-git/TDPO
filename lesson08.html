@@ -40,7 +40,7 @@ h1{margin:18px 0 10px;font-size:34px;line-height:1.15}.sub{font-size:17px;line-h
 <button class="tabbtn" data-panel="p2"><div class="tabtop"><span class="badge">2</span><span class="tabtitle">Остатки</span></div><div class="tabdesc">Найди два числа с одинаковым остатком.</div></button>
 <button class="tabbtn" data-panel="p3"><div class="tabtop"><span class="badge">3</span><span class="tabtitle">Места в круге</span></div><div class="tabdesc">Посади шестерых без соседей.</div></button>
 <button class="tabbtn" data-panel="p4"><div class="tabtop"><span class="badge">4</span><span class="tabtitle">Худший случай</span></div><div class="tabdesc">Собери максимум без трёх одинаковых.</div></button>
-<button class="tabbtn" data-panel="p5"><div class="tabtop"><span class="badge">★</span><span class="tabtitle">★ Соседние клетки</span></div><div class="tabdesc">33 клетки на доске 8×8.</div></button>
+<button class="tabbtn" data-panel="p5"><div class="tabtop"><span class="badge">5</span><span class="tabtitle">Соседние клетки</span></div><div class="tabdesc">33 клетки на доске 8×8.</div></button>
 </div>
 <section class="panel active" id="p1">
 <h2>Задание 1. Линейка и близкие отметки</h2>
@@ -58,7 +58,7 @@ h1{margin:18px 0 10px;font-size:34px;line-height:1.15}.sub{font-size:17px;line-h
 <section class="panel" id="p2">
 <h2>Задание 2. Одинаковые остатки</h2>
 <p class="lead">Выбери любые 6 чисел. Они распределятся по пяти коробкам: в коробке написан остаток при делении на 5.</p>
-<div class="task"><strong>Задача.</strong> Из набора чисел выбрали 6 чисел. Докажи, что среди них найдутся два числа, которые дают одинаковый остаток при делении на 5.</div>
+<div class="task"><strong>Задача.</strong> Выбери из набора 6 чисел. Докажи, что среди выбранных найдутся два числа с одинаковым остатком при делении на 5.</div>
 <div class="chip-bank" id="numberBank"></div>
 <div class="residue-grid" id="residueGrid"></div>
 <div class="controls"><button class="btn check" onclick="checkResidues()">Проверить</button><button class="btn" onclick="resetResidues()">Сбросить</button></div>
@@ -85,10 +85,10 @@ h1{margin:18px 0 10px;font-size:34px;line-height:1.15}.sub{font-size:17px;line-h
 <section class="panel" id="p5">
 <h2>Задание 5. Соседние клетки</h2>
 <p class="lead">Выбирай клетки на шахматной доске. Попробуй набрать много клеток так, чтобы никакие две выбранные не имели общей стороны.</p>
-<div class="task"><strong>Задача со звёздочкой.</strong> На доске 8×8 выбрали 33 клетки. Докажи, что среди выбранных обязательно найдутся две клетки, имеющие общую сторону.</div>
+<div class="task"><strong>Задача.</strong> На доске 8×8 выбрали 33 клетки. Докажи, что среди выбранных обязательно найдутся две клетки, имеющие общую сторону.</div>
 <div class="layout2">
 <div class="board-wrap"><div class="board-title">Доска 8×8</div><div class="chess-grid" id="chessBoard"></div></div>
-<div class="card"><h3>Задача в три шага</h3><ol style="margin:0 0 12px 20px;padding:0;line-height:1.55"><li>Выбери на доске как можно больше клеток без общих сторон.</li><li>Сколько клеток удалось выбрать? Объясни, почему больше нельзя.</li><li>Теперь объясни, почему при 33 выбранных клетках соседняя пара неизбежна.</li></ol><div class="controls"><button class="btn check" onclick="checkChess()">Проверить</button><button class="btn" onclick="resetChess()">Сбросить</button></div><div class="feedback" id="fb5"></div></div>
+<div class="card"><h3>Задача в три шага</h3><ol style="margin:0 0 12px 20px;padding:0;line-height:1.55"><li>Выбери на доске как можно больше клеток без общих сторон.</li><li>Сколько клеток удалось выбрать? Для доказательства разбей доску на 32 горизонтальных домино.</li><li>Теперь объясни, почему при 33 выбранных клетках соседняя пара неизбежна.</li></ol><div class="controls"><button class="btn check" onclick="checkChess()">Проверить</button><button class="btn" onclick="resetChess()">Сбросить</button></div><div class="feedback" id="fb5"></div></div>
 </div>
 </section>
 <div class="foot">Главная идея: чтобы доказать неизбежность совпадения, удобно представить объекты как предметы, а возможные варианты - как ящики.</div>
@@ -128,11 +128,11 @@ function resetSocks(){buildSocks();clearFeedback('fb4');}
 buildSocks();
 // Task 5
 let chosenCells=new Set();function keyCell(r,c){return r+','+c;}function buildChess(){const b=document.getElementById('chessBoard');b.innerHTML='';for(let r=0;r<8;r++)for(let c=0;c<8;c++){const cell=document.createElement('div');cell.className='chess-cell '+(((r+c)%2)?'dark':'light');cell.dataset.r=r;cell.dataset.c=c;cell.onclick=()=>toggleChess(r,c);b.appendChild(cell);}renderChess();}
-function toggleChess(r,c){const k=keyCell(r,c);if(chosenCells.has(k))chosenCells.delete(k);else chosenCells.add(k);renderChess();clearFeedback('fb5');}
+function toggleChess(r,c){const k=keyCell(r,c);if(chosenCells.has(k))chosenCells.delete(k);else if(chosenCells.size<33)chosenCells.add(k);renderChess();clearFeedback('fb5');}
 function renderChess(){document.querySelectorAll('.chess-cell').forEach(cell=>{const k=keyCell(+cell.dataset.r,+cell.dataset.c);cell.classList.toggle('selected',chosenCells.has(k));cell.classList.remove('neighbor');cell.textContent=chosenCells.has(k)?'✓':'';});}
 function neighborPairs(){const pairs=[];const dirs=[[1,0],[0,1]];chosenCells.forEach(k=>{const [r,c]=k.split(',').map(Number);dirs.forEach(([dr,dc])=>{const kk=keyCell(r+dr,c+dc);if(chosenCells.has(kk))pairs.push([k,kk]);});});return pairs;}
 function markPairs(pairs){pairs.forEach(pair=>pair.forEach(k=>{const [r,c]=k.split(',').map(Number);const cell=document.querySelector('.chess-cell[data-r="'+r+'"][data-c="'+c+'"]');if(cell)cell.classList.add('neighbor');}));}
-function checkChess(){renderChess();const pairs=neighborPairs();markPairs(pairs);if(chosenCells.size<33){showFeedback('fb5',false,'Сейчас выбрано '+chosenCells.size+' клеток. Для проверки ответа выбери 33 клетки.','warn');return;}showFeedback('fb5',pairs.length>0,'Верно: среди выбранных клеток есть пара с общей стороной.');}
+function checkChess(){renderChess();const pairs=neighborPairs();markPairs(pairs);if(chosenCells.size!==33){showFeedback('fb5',false,'Сейчас выбрано '+chosenCells.size+' клеток. Для проверки выбери ровно 33 клетки.','warn');return;}showFeedback('fb5',pairs.length>0,'Верно: разобьём доску на 32 горизонтальных домино. Среди 33 выбранных клеток обе клетки какого-то домино выбраны, поэтому они имеют общую сторону.');}
 function resetChess(){chosenCells.clear();renderChess();clearFeedback('fb5');}
 buildChess();
 </script>
