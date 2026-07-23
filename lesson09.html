@@ -58,7 +58,7 @@ h2{margin:0 0 8px;color:var(--accent);font-size:29px}.lead{margin:0 0 18px;color
     <button class="tabbtn" data-panel="p2" type="button"><div class="tabtop"><span class="badge">2</span><span class="tabtitle">Две коробки</span></div><div class="tabdesc">Найти позицию, неудобную для соперника.</div></button>
     <button class="tabbtn" data-panel="p3" type="button"><div class="tabtop"><span class="badge">3</span><span class="tabtitle">Робот</span></div><div class="tabdesc">Дойти до финиша раньше компьютера.</div></button>
     <button class="tabbtn" data-panel="p4" type="button"><div class="tabtop"><span class="badge">4</span><span class="tabtitle">Круглый стол</span></div><div class="tabdesc">Счёт ходов и пары противоположных мест.</div></button>
-    <button class="tabbtn" data-panel="p5" type="button"><div class="tabtop"><span class="badge star-badge">★</span><span class="tabtitle">Три стопки</span></div><div class="tabdesc">Игра со звёздочкой: думай на несколько ходов.</div></button>
+    <button class="tabbtn" data-panel="p5" type="button"><div class="tabtop"><span class="badge">5</span><span class="tabtitle">Три стопки</span></div><div class="tabdesc">Повышенный уровень: сравни две стартовые позиции.</div></button>
   </div>
 
   <section class="panel active" id="p1">
@@ -77,7 +77,7 @@ h2{margin:0 0 8px;color:var(--accent);font-size:29px}.lead{margin:0 0 18px;color
     <div class="task"><strong>Правило.</strong> За ход можно взять 1, 2 или 3 фишки только из одной коробки. Кто забирает последнюю фишку, выигрывает. Ты ходишь первым.</div>
     <div class="game-grid">
       <div class="card"><h3>Коробки</h3><div class="pile-game"><div class="pile-box"><h4>Левая</h4><div class="tokens" id="leftTokens"></div><div class="pile-actions" id="leftActions"></div></div><div class="pile-box"><h4>Правая</h4><div class="tokens" id="rightTokens"></div><div class="pile-actions" id="rightActions"></div></div></div></div>
-      <div class="card"><h3>Партия</h3><div class="variant-row"><button class="variant-btn active" type="button" id="pilesA" onclick="resetPiles('a')">Партия А</button><button class="variant-btn" type="button" id="pilesB" onclick="resetPiles('b')">Партия Б</button></div><div class="scoreline"><span class="score-pill" id="pilesCount"></span><span class="score-pill">Компьютер отвечает после тебя</span></div><p class="muted">В каждой партии у компьютера есть ответ на некоторые ходы, но не на все.</p><div class="controls"><button class="btn" type="button" onclick="resetPiles(pilesVariant)">Начать заново</button></div><div class="game-status note" id="pilesStatus"></div></div>
+      <div class="card"><h3>Партия</h3><div class="variant-row"><button class="variant-btn active" type="button" id="pilesA" onclick="resetPiles('a')">Партия А</button><button class="variant-btn" type="button" id="pilesB" onclick="resetPiles('b')">Партия Б</button></div><div class="scoreline"><span class="score-pill" id="pilesCount"></span><span class="score-pill">Компьютер отвечает после тебя</span></div><p class="muted">Сравни стартовые позиции. В одной можно первым ходом сделать остатки кучек одинаковыми, в другой они уже одинаковы.</p><div class="controls"><button class="btn" type="button" onclick="resetPiles(pilesVariant)">Начать заново</button></div><div class="game-status note" id="pilesStatus"></div></div>
     </div>
   </section>
 
@@ -97,13 +97,13 @@ h2{margin:0 0 8px;color:var(--accent);font-size:29px}.lead{margin:0 0 18px;color
     <div class="task"><strong>Правило.</strong> За ход можно занять один свободный стул. Кто занимает последний свободный стул, выигрывает. Ты ходишь первым.</div>
     <div class="game-grid">
       <div class="card"><h3>Стол</h3><div class="round-wrap"><div class="round-game" id="roundGame"><div class="table-center">КРУГЛЫЙ<br>СТОЛ</div></div></div></div>
-      <div class="card"><h3>Партия</h3><div class="variant-row"><button class="variant-btn active" type="button" id="roundA" onclick="resetRound('a')">Партия А</button><button class="variant-btn" type="button" id="roundB" onclick="resetRound('b')">Партия Б</button></div><p class="muted">В одной партии решает чётность числа мест, а в другой у компьютера есть симметричный ответ.</p><div class="controls"><button class="btn" type="button" onclick="resetRound(roundVariant)">Начать заново</button></div><div class="game-status note" id="roundStatus"></div></div>
+      <div class="card"><h3>Партия</h3><div class="variant-row"><button class="variant-btn active" type="button" id="roundA" onclick="resetRound('a')">Партия А</button><button class="variant-btn" type="button" id="roundB" onclick="resetRound('b')">Партия Б</button></div><p class="muted">Сначала предскажи победителя по чётности числа мест. В варианте с 8 местами проследи за ответом на противоположный стул.</p><div class="controls"><button class="btn" type="button" onclick="resetRound(roundVariant)">Начать заново</button></div><div class="game-status note" id="roundStatus"></div></div>
     </div>
   </section>
 
   <section class="panel" id="p5">
     <div class="star-label">★ Задача со звёздочкой</div>
-    <h2>Три стопки жетонов</h2>
+    <h2>Задание 5. Три стопки жетонов</h2>
     <p class="lead">Здесь ход можно сделать только в одной стопке, но взять из неё разрешается любое положительное число жетонов.</p>
     <div class="task"><strong>Правило.</strong> Игроки по очереди снимают жетоны только с одной стопки. Кто забирает последний жетон, выигрывает. Ты ходишь первым.</div>
     <div class="game-grid">
